@@ -19,9 +19,9 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -60,7 +60,7 @@ uint32_t Address = 0, PageError = 0;
 __IO uint32_t data32 = 0 , MemoryProgramStatus = 0;
 
 /*Variable used for Erase procedure*/
-static FLASH_EraseInitTypeDef EraseInitStruct;
+//static FLASH_EraseInitTypeDef EraseInitStruct;
 
 /* USER CODE END PV */
 
@@ -68,7 +68,7 @@ static FLASH_EraseInitTypeDef EraseInitStruct;
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void SystemClock_Config(void);
-static uint32_t GetPage(uint32_t Address);
+//static uint32_t GetPage(uint32_t Address);
 
 /* USER CODE END PFP */
 
@@ -95,7 +95,6 @@ int main(void)
      */
 
   /* USER CODE END 1 */
-  
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -115,6 +114,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   /* Initialize LED0 */
 
@@ -124,7 +124,7 @@ int main(void)
   
   /* Erase the user Flash area
     (area defined by FLASH_USER_START_ADDR and FLASH_USER_END_ADDR) ***********/
-
+#if 0
 
   /* Get the 1st page to erase */
   FirstPage = GetPage(FLASH_USER_START_ADDR);
@@ -204,6 +204,7 @@ int main(void)
     /* Error detected. LED0 will blink with 1s period */
 
   }
+ #endif 
     for (int j=0;j<10;j++)
     {
       HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
@@ -237,10 +238,12 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage 
+  /** Configure the main internal regulator output voltage
   */
   HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
-  /** Initializes the CPU, AHB and APB busses clocks 
+
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
@@ -254,7 +257,8 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
+
+  /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1;
@@ -277,10 +281,10 @@ void SystemClock_Config(void)
   * @param  Addr: Address of the FLASH Memory
   * @retval The page of a given address
   */
-static uint32_t GetPage(uint32_t Addr)
-{
-  return (Addr - FLASH_BASE) / FLASH_PAGE_SIZE;//(Add-0x08000000)/0x800
-}
+//static uint32_t GetPage(uint32_t Addr)
+//{
+//  return (Addr - FLASH_BASE) / FLASH_PAGE_SIZE;//(Add-0x08000000)/0x800
+//}
 
 
 
@@ -309,7 +313,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
@@ -321,5 +325,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
