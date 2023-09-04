@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "iap.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,8 +42,8 @@ uint32_t JumpAddress;
 #define FLASH_USER_START_ADDR   (FLASH_BASE + (16 * FLASH_PAGE_SIZE))   /* Start @ of user Flash area */
 #define FLASH_USER_END_ADDR     (FLASH_USER_START_ADDR + FLASH_PAGE_SIZE)   /* End @ of user Flash area */
 
-#define DATA_64                 ((uint64_t)0x1234567812345678)
-#define DATA_32                 ((uint32_t)0x12345678)
+//#define DATA_64                 ((uint64_t)0x1234567812345678)
+//#define DATA_32                 ((uint32_t)0x12345678)
 
 /* USER CODE END PD */
 
@@ -93,9 +93,13 @@ int main(void)
          handled in milliseconds basis.
        - Low Level Initialization
      */
-
+     uint8_t t;
+    uint8_t key;
+    uint32_t oldcount = 0;      /* 老的串口接收数据值 */
+    uint32_t applenth = 0;      /* 接收到的app代码长度 */
+    uint8_t clearflag = 0;
   /* USER CODE END 1 */
-
+   
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -211,7 +215,7 @@ int main(void)
       HAL_Delay(100);
     }
   /* USER CODE END 2 */
-
+  printf("bootloader!\r\n");
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -219,13 +223,37 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    
+     if (g_usart_rx_cnt)
+     {
+            if (oldcount == g_usart_rx_cnt)   /* 新周期内,没有收到任何数据,认为本次数据接收完成 */
+            {
+                applenth = g_usart_rx_cnt;
+                oldcount = 0;
+                g_usart_rx_cnt = 0;
+                printf("用户程序接收完成!\r\n");
+                printf("代码长度:%dBytes\r\n", applenth);
+                
+            }
+            else oldcount = g_usart_rx_cnt;
+      }
+     
+    HAL_Delay(200);
+    if(applenth){ 
+      iap_write_appbin(FLASH_APP1_ADDR, g_usart_rx_buf, applenth);            /* 更新FLASH代码 */
+       key++;
+       printf("key = %d\r\n",key);
+    }
  /* Jump to user application */
+    if(key > 200){
       JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
       JumpToApplication = (pFunction) JumpAddress;
       /* Initialize user application's Stack Pointer */
       __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
       JumpToApplication();
+    }
   }
+  
   /* USER CODE END 3 */
 }
 

@@ -19,14 +19,27 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
-
+#include <stdio.h>
 /* USER CODE BEGIN 0 */
-
+uint8_t g_usart_rx_buf[USART_REC_LEN] __attribute__ ((at(0X20001000))); //receive form usat1 max words 4096
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;
 
 /* USART1 init function */
+uint16_t g_usart_rx_sta = 0;
+uint32_t g_usart_rx_cnt = 0;
+uint8_t g_rx_buffer[RXBUFFERSIZE];  /* HAL库使用的串口接收缓冲 */
+
+/* MDK下需要重定义fputc函数, printf函数最终会通过调用fputc输出字符串到串口 */
+int fputc(int ch, FILE *f)
+{
+    while ((USART1->ISR & 0X40) == 0);     /* 等待上一个字符发送完成 */
+
+    USART1->TDR = (uint8_t)ch;             /* 将要发送的字符 ch 写入到DR寄存器 */
+    return ch;
+}
+
 
 void MX_USART1_UART_Init(void)
 {
@@ -66,7 +79,7 @@ void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
-
+  HAL_UART_Receive_IT(&huart1, (uint8_t *)g_rx_buffer, RXBUFFERSIZE); 
   /* USER CODE END USART1_Init 2 */
 
 }
@@ -141,5 +154,23 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
+/**
+ * @brief       串口数据接收回调函数
+                数据处理在这里进行
+ * @param       huart:串口句柄
+ * @retval      无
+ */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1)                    /* 如果是串口1 */
+    {
+        if (g_usart_rx_cnt < USART_REC_LEN)
+        {
+            g_usart_rx_buf[g_usart_rx_cnt] = g_rx_buffer[0];
+            g_usart_rx_cnt++;
+        }
 
+        HAL_UART_Receive_IT(&huart1, (uint8_t *)g_rx_buffer, RXBUFFERSIZE);
+    }
+}
 /* USER CODE END 1 */
