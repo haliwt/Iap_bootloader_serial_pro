@@ -219,12 +219,14 @@ int main(void)
   printf("bootloader!\r\n");
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  Main_Menu();
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    #if 1
+   
+    #if 0
      if (g_usart_rx_cnt)
      {
               t=0;
@@ -251,7 +253,7 @@ int main(void)
     key=1;
     
     }
-    #endif 
+   
  /* Jump to user application */
     if(key ==1){
 //      JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
@@ -261,6 +263,7 @@ int main(void)
 //      JumpToApplication();
         iap_load_app(0x20001000);
     }
+     #endif 
   }
   
   /* USER CODE END 3 */

@@ -198,7 +198,7 @@ int32_t Ymodem_Receive (uint8_t *buf)
 
                     /* Test the size of the image to be sent */
                     /* Image size is greater than Flash size */
-                    if (size > (FLASH_SIZE - 1))
+                    if (size > (YMODEM_FLASH_SIZE - 1))
                     {
                       /* End session */
                       Send_Byte(CA);
@@ -238,7 +238,7 @@ int32_t Ymodem_Receive (uint8_t *buf)
                   {
                     /* Program the data received into STM32F10x Flash */
                     //FLASH_ProgramWord(FlashDestination, *(uint32_t*)RamSource);
-                      HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, FlashDestination, *(uint32_t*)RamSource); //
+                      HAL_FLASH_Program(FLASH_TYPEPROGRAM_FAST, FlashDestination, *(uint32_t*)RamSource); //
 
                     if (*(uint32_t*)FlashDestination != *(uint32_t*)RamSource)
                     {
