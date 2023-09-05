@@ -29,7 +29,7 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-#define USART_REC_LEN               4 * 1024   /* 定义最大接收字节数 4*1024  //55*1024 max = 64Kb SARM*/
+#define USART_REC_LEN               3 * 1024   /* 定义最大接收字节数 4*1024  //55*1024 max = 64Kb SARM*/
 #define USART_EN_RX                 1           /* 使能（1）/禁止（0）串口1接收 */
 #define RXBUFFERSIZE   1                        /* 缓存大小 */
 /* USER CODE END Includes */
