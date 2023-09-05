@@ -55,9 +55,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint32_t FirstPage = 0, NbOfPages = 0;
-uint32_t Address = 0, PageError = 0;
-__IO uint32_t data32 = 0 , MemoryProgramStatus = 0;
+//uint32_t FirstPage = 0, NbOfPages = 0;
+//uint32_t Address = 0, PageError = 0;
+//__IO uint32_t data32 = 0 , MemoryProgramStatus = 0;
 
 /*Variable used for Erase procedure*/
 //static FLASH_EraseInitTypeDef EraseInitStruct;
@@ -71,7 +71,7 @@ __IO uint32_t data32 = 0 , MemoryProgramStatus = 0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void SystemClock_Config(void);
+
 //static uint32_t GetPage(uint32_t Address);
 
 /* USER CODE END PFP */

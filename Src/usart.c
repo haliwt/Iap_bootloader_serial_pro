@@ -34,10 +34,14 @@ uint8_t g_rx_buffer[RXBUFFERSIZE];  /* HAL库使用的串口接收缓冲 */
 /* MDK下需要重定义fputc函数, printf函数最终会通过调用fputc输出字符串到串口 */
 int fputc(int ch, FILE *f)
 {
-    while ((USART1->ISR & 0X40) == 0);     /* 等待上一个字符发送完成 */
-
-    USART1->TDR = (uint8_t)ch;             /* 将要发送的字符 ch 写入到DR寄存器 */
-    return ch;
+ /* 写一个字节到USART1 */
+	USART1->TDR = ch;
+	
+	/* 等待发送结束 */
+	while((USART1->ISR & USART_ISR_TC) == 0)
+	{}
+	
+	return ch;
 }
 
 
@@ -79,7 +83,7 @@ void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
-  HAL_UART_Receive_IT(&huart1, (uint8_t *)g_rx_buffer, RXBUFFERSIZE); 
+//  HAL_UART_Receive_IT(&huart1, (uint8_t *)g_rx_buffer, RXBUFFERSIZE); 
   /* USER CODE END USART1_Init 2 */
 
 }
@@ -120,8 +124,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* USART1 interrupt Init */
-    HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(USART1_IRQn);
+  //  HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+  //  HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* USER CODE BEGIN USART1_MspInit 1 */
 
   /* USER CODE END USART1_MspInit 1 */
@@ -160,17 +164,43 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
  * @param       huart:串口句柄
  * @retval      无
  */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//    if (huart->Instance == USART1)                    /* 如果是串口1 */
+//    {
+//        if (g_usart_rx_cnt < USART_REC_LEN)
+//        {
+//            g_usart_rx_buf[g_usart_rx_cnt] = g_rx_buffer[0];
+//            g_usart_rx_cnt++;
+//        }
+//
+//        HAL_UART_Receive_IT(&huart1, (uint8_t *)g_rx_buffer, RXBUFFERSIZE);
+//    }
+//}
+/*
+*********************************************************************************************************
+*	函 数 名: fgetc
+*	功能说明: 重定义getc函数，这样可以使用getchar函数从串口1输入数据
+*	形    参: 无
+*	返 回 值: 无
+*********************************************************************************************************
+*/
+int fgetc(FILE *f)
 {
-    if (huart->Instance == USART1)                    /* 如果是串口1 */
-    {
-        if (g_usart_rx_cnt < USART_REC_LEN)
-        {
-            g_usart_rx_buf[g_usart_rx_cnt] = g_rx_buffer[0];
-            g_usart_rx_cnt++;
-        }
 
-        HAL_UART_Receive_IT(&huart1, (uint8_t *)g_rx_buffer, RXBUFFERSIZE);
-    }
+#if 0	/* 从串口接收FIFO中取1个数据, 只有取到数据才返回 */
+	uint8_t ucData;
+
+	while(comGetChar(COM1, &ucData) == 0);
+
+	return ucData;
+#else
+	/* 等待接收到数据 */
+//	while((USART1->ISR & USART_ISR_RXNE_RXFNE ) == 0)
+//	{}
+
+	return (int)USART1->RDR;
+#endif
 }
 /* USER CODE END 1 */
+

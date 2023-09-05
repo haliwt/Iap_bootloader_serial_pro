@@ -422,7 +422,7 @@ void Main_Menu(void)
 //  {
 //    FlashProtection = 0;
 //  }
-  HAL_FLASH_Unlock();
+ // HAL_FLASH_Unlock();
   while (1)
   {
     SerialPutString("\r\n================== Main Menu ============================\r\n\n");

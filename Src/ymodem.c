@@ -26,6 +26,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "common.h"
 #include "main.h"
+#include "iap.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -41,7 +42,10 @@ FLASH_Status FLASH_COMPLETE;
 uint32_t RamSource;
 extern uint8_t tab_1024[1024];
 
+uint8_t UartRecBuf[248]={0};
+uint8_t FileName[1024];
 
+static FLASH_EraseInitTypeDef EraseInitStruct;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -147,9 +151,14 @@ int32_t Ymodem_Receive (uint8_t *buf)
 {
   uint8_t packet_data[PACKET_1K_SIZE + PACKET_OVERHEAD], file_size[FILE_SIZE_LENGTH], *file_ptr, *buf_ptr;
   int32_t i, j, packet_length, session_done, file_done, packets_received, errors, session_begin, size = 0;
+  
+    
+  
 
   /* Initialize FlashDestination variable */
   FlashDestination = ApplicationAddress;
+    
+
 
   for (session_done = 0, errors = 0, session_begin = 0; ;)
   {
@@ -213,9 +222,9 @@ int32_t Ymodem_Receive (uint8_t *buf)
                     /* Erase the FLASH pages */
                     for (EraseCounter = 0; (EraseCounter < NbrOfPage) && (FLASHStatus == FLASH_COMPLETE); EraseCounter++)
                     {
-                     // FLASHStatus = FLASH_ErasePage(FlashDestination + (PageSize * EraseCounter));
-                      //FLASHStatus = HAL_FLASHEx_Erase(&EraseInitStruct,(uint32_t *)(FlashDestination + (PageSize * EraseCounter)));
-                        FLASH_PageErase(FLASH_BANK_1,(FlashDestination + (PageSize * EraseCounter)));
+                     // FLASHStatus = FLASH_ErasePage(FlashDestination + (PageSize * EraseCounter))
+                       FLASH_PageErase(FLASH_BANK_1,(FlashDestination + (PageSize * EraseCounter)));
+                        
                     }
                     Send_Byte(ACK);
                     Send_Byte(CRC16);
@@ -236,15 +245,19 @@ int32_t Ymodem_Receive (uint8_t *buf)
                   RamSource = (uint32_t)buf;
                   for (j = 0;(j < packet_length) && (FlashDestination <  ApplicationAddress + size);j += 4)
                   {
-                    /* Program the data received into STM32F10x Flash */
+                 
+                      /* Program the data received into STM32F10x Flash */
                     //FLASH_ProgramWord(FlashDestination, *(uint32_t*)RamSource);
-                      HAL_FLASH_Program(FLASH_TYPEPROGRAM_FAST, FlashDestination, *(uint32_t*)RamSource); //
+                   
+                     HAL_FLASH_Program(FLASH_TYPEPROGRAM_FAST, FlashDestination, *(uint32_t*)RamSource); //
+                     
 
                     if (*(uint32_t*)FlashDestination != *(uint32_t*)RamSource)
                     {
                       /* End session */
                       Send_Byte(CA);
                       Send_Byte(CA);
+                 
                       return -2;
                     }
                     FlashDestination += 4;
@@ -286,6 +299,185 @@ int32_t Ymodem_Receive (uint8_t *buf)
     }
   }
   return (int32_t)size;
+}
+/*
+*********************************************************************************************************
+*	函 数 名: Receive_Packet
+*	功能说明: 按照ymodem协议接收数据       
+*	形    参: buf 数据首地址
+*	返 回 值: 文件大小
+*********************************************************************************************************
+*/
+uint32_t TotalSize = 0;
+int32_t Ymodem_Receive_128Bytes(uint8_t *buf, uint32_t appadr)
+{
+	uint8_t packet_data[PACKET_1K_SIZE + PACKET_OVERHEAD], file_size[FILE_SIZE_LENGTH], *file_ptr, *buf_ptr;
+	int32_t i, packet_length, session_done, file_done, packets_received, errors, session_begin, size = 0;
+	uint32_t flashdestination, ramsource;
+	uint8_t ucState;
+	uint32_t SectorCount = 0;
+	uint32_t SectorRemain = 0;
+
+	/* 初始化flash编程首地址 */
+	flashdestination = appadr;
+
+	/* 接收数据并进行flash编程 */
+	for (session_done = 0, errors = 0, session_begin = 0; ;)
+	{
+		for (packets_received = 0, file_done = 0, buf_ptr = buf; ;)
+		{
+			switch (Receive_Packet(packet_data, &packet_length, NAK_TIMEOUT))
+			{
+				/* 返回0表示接收成功 */
+				case 0:
+					errors = 0;
+					switch (packet_length)
+					{
+						/* 发送端终止传输 */
+						case - 1:
+							Send_Byte(ACK);
+							return 0;
+						
+						/* 传输结束 */
+						case 0:
+							Send_Byte(ACK);
+							file_done = 1;
+							break;
+						
+						/* 接收数据 */
+						default:
+							if ((packet_data[PACKET_SEQNO_INDEX] & 0xff) != (packets_received & 0xff))
+							{
+								Send_Byte(NAK);
+							}
+							else
+							{
+								if (packets_received == 0)
+								{
+									/* 文件名数据包 */
+									if (packet_data[PACKET_HEADER] != 0)
+									{
+										/* 读取文件名 */
+										for (i = 0, file_ptr = packet_data + PACKET_HEADER; (*file_ptr != 0) && (i < FILE_NAME_LENGTH);)
+										{
+											FileName[i++] = *file_ptr++;
+										}
+										/* 文件名末尾加结束符 */
+										FileName[i++] = '\0';
+										
+										/* 读取文件大小 */
+										for (i = 0, file_ptr ++; (*file_ptr != ' ') && (i < FILE_SIZE_LENGTH);)
+										{
+											file_size[i++] = *file_ptr++;
+										}
+										file_size[i++] = '\0';
+										
+										/* 将文件大小的字符串转换成整型数据 */
+										Str2Int(file_size, &size);
+
+										
+										/* 检测文件大小是否比flash空间大 */
+										if (size > (1024*1024*2 + 1))
+										{
+											/* 终止传输 */
+											Send_Byte(CA);
+											Send_Byte(CA);
+											return -1;
+										}
+
+										/* 擦除用户区flash */
+										SectorCount = size/(128*1024);
+										SectorRemain = size%(128*1024);	
+										
+										for(i = 0; i < SectorCount; i++)
+										{
+											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
+										}
+										
+										if(SectorRemain)
+										{
+											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
+										}
+										Send_Byte(ACK);
+										Send_Byte(CRC16);
+									}
+									/* 文件名数据包处理完，终止此部分，开始接收数据 */
+									else
+									{
+										Send_Byte(ACK);
+										file_done = 1;
+										session_done = 1;
+										break;
+									}
+								}
+								
+								/* 数据包 */
+								else
+								{
+									/* 读取数据 */
+									memcpy(buf_ptr, packet_data + PACKET_HEADER, packet_length);
+									ramsource = (uint32_t)buf;
+									
+									/* 扇区编程 */
+									//ucState = bsp_WriteCpuFlash((uint32_t)(flashdestination + TotalSize),  (uint8_t *)ramsource, packet_length);
+									HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (flashdestination + TotalSize), *(uint32_t*)RamSource); //
+                                    TotalSize += packet_length;
+									
+									/* 如果返回非0，表示编程失败 */
+									if(ucState != 0)
+									{
+										/* 终止传输 */
+										Send_Byte(CA);
+										Send_Byte(CA);
+										return -2;
+									}
+									
+									Send_Byte(ACK);
+								}
+								/* 接收数据包递增 */
+								packets_received ++;
+								session_begin = 1;
+							}
+					}
+					break;
+				
+				/* 用户终止传输 */
+				case 1:
+					Send_Byte(CA);
+					Send_Byte(CA);
+					return -3;
+				
+				/* 其它 */
+				default:
+					if (session_begin > 0)
+					{
+						errors ++;
+					}
+					
+					if (errors > MAX_ERRORS)
+					{
+						Send_Byte(CA);
+						Send_Byte(CA);
+						return 0;
+					}
+					
+					Send_Byte(CRC16);
+					break;
+			}
+			
+			if (file_done != 0)
+			{
+				break;
+			}
+		}
+		
+		if (session_done != 0)
+		{
+			break;
+		}
+	}
+	
+	return (int32_t)size;
 }
 
 /**

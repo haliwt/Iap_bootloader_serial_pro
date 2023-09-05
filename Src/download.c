@@ -24,16 +24,20 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "common.h"
+#include "ymodem.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+#define AppAddr  0x08004000    /* APPµØÖ· */
 extern uint8_t file_name[FILE_NAME_LENGTH];
 uint8_t tab_1024[1024] =
-  {
+ {
     0
-  };
+ };
+ 
+
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -49,7 +53,8 @@ void SerialDownload(void)
   int32_t Size = 0;
 
   SerialPutString("Waiting for the file to be sent ... (press 'a' to abort)\n\r");
-  Size = Ymodem_Receive(&tab_1024[0]);
+  //Size = Ymodem_Receive(&tab_1024[0]);
+   Size = Ymodem_Receive_128Bytes(UartRecBuf,AppAddr);
   if (Size > 0)
   {
     SerialPutString("\n\n\r Programming Completed Successfully!\n\r--------------------------------\r\n Name: ");

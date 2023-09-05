@@ -63,7 +63,8 @@ typedef enum
   YMODEM_FLASH_TIMEOUT
 }FLASH_Status;
 
-
+extern uint8_t UartRecBuf[248] ;//={0};
+extern uint8_t FileName[1024];
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 int32_t Ymodem_Receive (uint8_t *);

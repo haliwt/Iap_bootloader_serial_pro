@@ -51,7 +51,7 @@ typedef  void (*pFunction)(void);
  #define PAGE_SIZE                         (0x800)    /* 2 Kbytes */
  #define FLASH_SIZE                        (0x100000) /* 1 MByte */
 #else 
-// #error "Please select first the STM32 device to be used (in stm32f10x.h)" 
+ //#error "Please select first the STM32 device to be used (in stm32f10x.h)" 
  #define PAGE_SIZE                         (0x800)    /* 2 Kbyte */
  #define YMODEM_FLASH_SIZE                  (0x10000)  /* 64 KBytes */
 #endif
