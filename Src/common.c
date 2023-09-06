@@ -234,8 +234,9 @@ uint8_t GetKey(void)
   */
 void SerialPutChar(uint8_t c)
 {
+ 
   //USART_SendData(USART1, c);
-  HAL_UART_Transmit(&huart1,&c,0x01,0xfff);
+  HAL_UART_Transmit(&huart1,&c,0x01,0xffff);
   while(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_TXE) == RESET)//while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
   {
   }
@@ -451,6 +452,8 @@ void Main_Menu(void)
     }
     else if (key == 0x33)
     {
+
+      SerialPutString("Execute App Program \r\n\n");
       JumpAddress = *(__IO uint32_t*) (ApplicationAddress + 4);
 
       /* Jump to user application */
@@ -458,6 +461,7 @@ void Main_Menu(void)
       /* Initialize user application's Stack Pointer */
       __set_MSP(*(__IO uint32_t*) ApplicationAddress);
       Jump_To_Application();
+
     }
     else if ((key == 0x34) && (FlashProtection == 1))
     {

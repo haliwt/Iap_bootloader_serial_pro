@@ -213,15 +213,16 @@ uint8_t bsp_EraseCpuFlash(uint32_t _ulFlashAddr)
 	
 	/* 获取此地址所在的扇区 */
 	//FirstSector = bsp_GetSector(_ulFlashAddr);
-    FirstPage = GetPage(FLASH_USER_START_ADDR);
-	
+     FirstPage = GetPage(_ulFlashAddr);//flashdestination + i*128*16;//0x08004000;//GetPage();
+	 //FirstPage    =  bsp_GetSector(_ulFlashAddr);
 	/* 固定1个扇区 */
-	NbOfPages = 1;	
+	NbOfPages = 1;
 
 	/* 擦除扇区配置 */
 	EraseInitStruct.TypeErase     = FLASH_TYPEERASE_PAGES;
-	EraseInitStruct.Page        = FirstPage;
-    EraseInitStruct.NbPages     = NbOfPages;
+    EraseInitStruct.Banks  = FLASH_BANK_1;
+	EraseInitStruct.Page      = FirstPage;
+    EraseInitStruct.NbPages   = NbOfPages;
 
 	
 //	if (_ulFlashAddr >= ADDR_FLASH_SECTOR_0_BANK2)

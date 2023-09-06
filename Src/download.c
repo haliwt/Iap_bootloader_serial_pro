@@ -32,11 +32,13 @@
 /* Private variables ---------------------------------------------------------*/
 #define AppAddr  0x08004000    /* APPµÿ÷∑ */
 extern uint8_t file_name[FILE_NAME_LENGTH];
-uint8_t tab_1024[1024] =
- {
-    0
- };
+//uint8_t tab_1024[1024] =
+// {
+//    0
+// };
  
+uint8_t UartRecBuf[248]={0};
+uint8_t FileName[1024];
 
 
 /* Private function prototypes -----------------------------------------------*/

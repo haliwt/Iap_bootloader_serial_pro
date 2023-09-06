@@ -42,8 +42,8 @@ FLASH_Status FLASH_COMPLETE;
 uint32_t RamSource;
 extern uint8_t tab_1024[1024];
 
-uint8_t UartRecBuf[248]={0};
-uint8_t FileName[1024];
+//uint8_t UartRecBuf[248]={0};
+//uint8_t FileName[1024];
 
 static FLASH_EraseInitTypeDef EraseInitStruct;
 /* Private function prototypes -----------------------------------------------*/
@@ -386,17 +386,17 @@ int32_t Ymodem_Receive_128Bytes(uint8_t *buf, uint32_t appadr)
 										}
 
 										/* ²Á³ýÓÃ»§Çøflash */
-										SectorCount = size/(128*1024);
-										SectorRemain = size%(128*1024);	
+										SectorCount = size/(128*16);//SectorCount = size/(128*1024);
+										SectorRemain = size%(128*16);	//SectorRemain = size%(128*1024);	
 										
 										for(i = 0; i < SectorCount; i++)
 										{
-											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
+											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*16));//bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
 										}
 										
 										if(SectorRemain)
 										{
-											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
+											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*16));//bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
 										}
 										Send_Byte(ACK);
 										Send_Byte(CRC16);
