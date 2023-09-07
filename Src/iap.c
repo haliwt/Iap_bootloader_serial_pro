@@ -310,7 +310,7 @@ uint8_t bsp_WriteCpuFlash(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _ulS
     // 写入连续的10个Flash页
     HAL_FLASH_Unlock(); // 解锁Flash
 
-    for (i = 8; i< _ulSize /32; i++) {
+    for (i = 0; i< _ulSize /32; i++) {
        // eraseInitStruct.Page = page; // 设置当前擦除的页号
        // HAL_FLASHEx_Erase(&eraseInitStruct, &pageError); // 调用擦除函数
         
@@ -321,7 +321,7 @@ uint8_t bsp_WriteCpuFlash(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _ulS
 		_ucpSrc += 32;
 
       
-         if( HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, _ulFlashAddr, (uint64_t)((uint32_t)FlashWord))==HAL_OK){ // 写入数据
+         if( HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD , _ulFlashAddr, (uint64_t)((uint32_t)FlashWord))==HAL_OK){ // 写入数据
             _ulFlashAddr = _ulFlashAddr + 32;//32 /* µÝÔö£¬²Ù×÷ÏÂÒ»¸ö256bit */	
 
          }
@@ -334,7 +334,7 @@ uint8_t bsp_WriteCpuFlash(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _ulS
     }
 
     /* ³¤¶È²»ÊÇ32×Ö½ÚÕûÊý±¶ */
-	if (_ulSize % 32)
+	if (_ulSize % 16)
 	{
 		uint64_t FlashWord[4];
 		
@@ -343,7 +343,7 @@ uint8_t bsp_WriteCpuFlash(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _ulS
 		FlashWord[2] = 0;
 		FlashWord[3] = 0;
 		memcpy((char *)FlashWord, _ucpSrc, _ulSize % 32);
-		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, _ulFlashAddr, (uint64_t)((uint32_t)FlashWord)) == HAL_OK)
+		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD , _ulFlashAddr, (uint64_t)((uint32_t)FlashWord)) == HAL_OK)
 		{
 			; // _ulFlashAddr = _ulFlashAddr + 32;		
 		}		

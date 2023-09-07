@@ -392,15 +392,15 @@ int32_t Ymodem_Receive_128Bytes(uint8_t *buf, uint32_t appadr)
 										SectorCount = size/(128*16);//SectorCount = size/(128*1024);
 										SectorRemain = size%(128*16);	//SectorRemain = size%(128*1024);	
 										
-//										for(i = 0; i < SectorCount; i++)
-//										{
-//											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*16));//bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
-//										}
-//										
-//										if(SectorRemain)
-//										{
-//											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*16));//bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
-//										}
+										for(i = 0; i < SectorCount; i++)
+										{
+											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*16));//bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
+										}
+										
+										if(SectorRemain)
+										{
+											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*16));//bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
+										}
 										Send_Byte(ACK);
 										Send_Byte(CRC16);
 									}
@@ -424,7 +424,7 @@ int32_t Ymodem_Receive_128Bytes(uint8_t *buf, uint32_t appadr)
 									/* 扇区编程 */
 									ucState = bsp_WriteCpuFlash((uint32_t)(flashdestination + TotalSize),  (uint8_t *)ramsource, packet_length);
 									//HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (flashdestination + TotalSize), *(uint32_t*)RamSource); //
-                                    Flash_Serial_WriteData((uint32_t)(flashdestination + TotalSize),  (uint8_t *)ramsource, packet_length);
+                                   // Flash_Serial_WriteData((uint32_t)(flashdestination + TotalSize),  (uint8_t *)ramsource, packet_length);
                                     TotalSize += packet_length;
 									
 									/* 如果返回非0，表示编程失败 */
