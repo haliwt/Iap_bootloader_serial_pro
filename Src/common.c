@@ -38,6 +38,8 @@ uint32_t BlockNbr = 0, UserMemoryMask = 0;
 __IO uint32_t FlashProtection = 0;
 extern uint32_t FlashDestination;
 FLASH_Status FLASH_DET;
+uint8_t flash_erase_times;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 

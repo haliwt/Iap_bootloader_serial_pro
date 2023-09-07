@@ -272,7 +272,7 @@ uint8_t bsp_EraseCpuFlash(uint32_t _ulFlashAddr)
 *	返 回 值: 0-成功，1-数据长度或地址溢出，2-写Flash出错(估计Flash寿命到)
 *********************************************************************************************************
 */
-#if 1
+#if 0
 uint8_t bsp_WriteCpuFlash(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _ulSize)
 {
 

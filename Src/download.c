@@ -33,10 +33,10 @@
 /* Private variables ---------------------------------------------------------*/
 #define AppAddr  0x08004000    /* APPµØÖ· */
 extern uint8_t file_name[FILE_NAME_LENGTH];
-//uint8_t tab_1024[1024] =
-// {
-//    0
-// };
+uint8_t tab_1024[1024] =
+{ 
+    0
+};
  
 uint8_t UartRecBuf[128]={0};
 uint8_t FileName[1024];
@@ -56,13 +56,14 @@ void SerialDownload(void)
   int32_t Size = 0;
 
   SerialPutString("Waiting for the file to be sent ... (press 'a' to abort)\n\r");
-  //Size = Ymodem_Receive(&tab_1024[0]);
+  
    if(flash_erase_times ==0){
          flash_erase_times++;
          Flash_Serial_ErasePage();
          printf("flas erase is over \r\n");
     }
-   Size = Ymodem_Receive_128Bytes(UartRecBuf,AppAddr);
+   Size = Ymodem_Receive(&tab_1024[0]);
+  // Size = Ymodem_Receive_128Bytes(UartRecBuf,AppAddr);
   if (Size > 0)
   {
     SerialPutString("\n\n\r Programming Completed Successfully!\n\r--------------------------------\r\n Name: ");
