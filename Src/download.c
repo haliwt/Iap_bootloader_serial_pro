@@ -25,6 +25,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "common.h"
 #include "ymodem.h"
+#include "iap.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -37,7 +38,7 @@ extern uint8_t file_name[FILE_NAME_LENGTH];
 //    0
 // };
  
-uint8_t UartRecBuf[248]={0};
+uint8_t UartRecBuf[128]={0};
 uint8_t FileName[1024];
 
 
@@ -56,6 +57,11 @@ void SerialDownload(void)
 
   SerialPutString("Waiting for the file to be sent ... (press 'a' to abort)\n\r");
   //Size = Ymodem_Receive(&tab_1024[0]);
+   if(flash_erase_times ==0){
+         flash_erase_times++;
+         Flash_Serial_ErasePage();
+         printf("flas erase is over \r\n");
+    }
    Size = Ymodem_Receive_128Bytes(UartRecBuf,AppAddr);
   if (Size > 0)
   {

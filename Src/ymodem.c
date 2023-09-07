@@ -40,10 +40,11 @@ uint32_t NbrOfPage = 0;
 FLASH_Status FLASHStatus;//= 
 FLASH_Status FLASH_COMPLETE;
 uint32_t RamSource;
-extern uint8_t tab_1024[1024];
+//extern uint8_t tab_1024[1024];
 
 //uint8_t UartRecBuf[248]={0};
 //uint8_t FileName[1024];
+uint8_t flash_erase_times;
 
 static FLASH_EraseInitTypeDef EraseInitStruct;
 /* Private function prototypes -----------------------------------------------*/
@@ -317,9 +318,11 @@ int32_t Ymodem_Receive_128Bytes(uint8_t *buf, uint32_t appadr)
 	uint8_t ucState;
 	uint32_t SectorCount = 0;
 	uint32_t SectorRemain = 0;
-
+   
+    
+  
 	/* 初始化flash编程首地址 */
-	flashdestination = appadr;
+	flashdestination =  ApplicationAddress;//appadr;
 
 	/* 接收数据并进行flash编程 */
 	for (session_done = 0, errors = 0, session_begin = 0; ;)
@@ -389,15 +392,15 @@ int32_t Ymodem_Receive_128Bytes(uint8_t *buf, uint32_t appadr)
 										SectorCount = size/(128*16);//SectorCount = size/(128*1024);
 										SectorRemain = size%(128*16);	//SectorRemain = size%(128*1024);	
 										
-										for(i = 0; i < SectorCount; i++)
-										{
-											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*16));//bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
-										}
-										
-										if(SectorRemain)
-										{
-											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*16));//bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
-										}
+//										for(i = 0; i < SectorCount; i++)
+//										{
+//											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*16));//bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
+//										}
+//										
+//										if(SectorRemain)
+//										{
+//											bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*16));//bsp_EraseCpuFlash((uint32_t)(flashdestination + i*128*1024));
+//										}
 										Send_Byte(ACK);
 										Send_Byte(CRC16);
 									}
@@ -419,8 +422,9 @@ int32_t Ymodem_Receive_128Bytes(uint8_t *buf, uint32_t appadr)
 									ramsource = (uint32_t)buf;
 									
 									/* 扇区编程 */
-									//ucState = bsp_WriteCpuFlash((uint32_t)(flashdestination + TotalSize),  (uint8_t *)ramsource, packet_length);
-									HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (flashdestination + TotalSize), *(uint32_t*)RamSource); //
+									ucState = bsp_WriteCpuFlash((uint32_t)(flashdestination + TotalSize),  (uint8_t *)ramsource, packet_length);
+									//HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (flashdestination + TotalSize), *(uint32_t*)RamSource); //
+                                    Flash_Serial_WriteData((uint32_t)(flashdestination + TotalSize),  (uint8_t *)ramsource, packet_length);
                                     TotalSize += packet_length;
 									
 									/* 如果返回非0，表示编程失败 */

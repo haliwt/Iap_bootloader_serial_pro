@@ -24,6 +24,8 @@
 
 #include "iap.h"
 #include "stmflash.h"
+#include "ymodem.h"
+#include "common.h"
 
 /* USER CODE BEGIN PD */
 #define FLASH_USER_START_ADDR   (FLASH_BASE + (26 * FLASH_PAGE_SIZE))   /* Start @ of user Flash area */
@@ -270,54 +272,68 @@ uint8_t bsp_EraseCpuFlash(uint32_t _ulFlashAddr)
 *	�� �� ֵ: 0-�ɹ���1-���ݳ��Ȼ��ַ�����2-дFlash����(����Flash������)
 *********************************************************************************************************
 */
-#if 0
+#if 1
 uint8_t bsp_WriteCpuFlash(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _ulSize)
 {
-	uint32_t i;
-	uint8_t ucRet;
 
-	/* ���ƫ�Ƶ�ַ����оƬ�������򲻸�д��������� */
+    uint32_t i;
+	//uint8_t ucRet;
+     // 定义Flash写入结构体变量
+    FLASH_EraseInitTypeDef eraseInitStruct;
+
+    // 定义Flash写入变量
+   // uint32_t data[512]; // 2KB数据缓冲区
+
+  //  data =_ucpSrc;
+
+    /* Èç¹ûÆ«ÒÆµØÖ·³¬¹ýÐ¾Æ¬ÈÝÁ¿£¬Ôò²»¸ÄÐ´Êä³ö»º³åÇø */
 	if (_ulFlashAddr + _ulSize > CPU_FLASH_BASE_ADDR + CPU_FLASH_SIZE)
 	{
 		return 1;
 	}
 
-	/* ����Ϊ0ʱ����������  */
+	/* ³¤¶ÈÎª0Ê±²»¼ÌÐø²Ù×÷  */
 	if (_ulSize == 0)
 	{
 		return 0;
 	}
 
-	ucRet = bsp_CmpCpuFlash(_ulFlashAddr, _ucpSrc, _ulSize);
+    // 写入Flash数据
+//    eraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES; // 擦除类型为页
+//    eraseInitStruct.Banks = FLASH_BANK_1; // 擦除的Flash Bank
+//    eraseInitStruct.Page = 8; // 擦除的起始页号
+//    eraseInitStruct.NbPages = 1; // 擦除的页数量
+//
+//    uint32_t pageError = 0; // 用于保存擦除错误的地址
 
-	if (ucRet == FLASH_IS_EQU)
-	{
-		return 0;
-	}
+    __set_PRIMASK(1);  		/* turn off interrupt  */
+    // 写入连续的10个Flash页
+    HAL_FLASH_Unlock(); // 解锁Flash
 
-	__set_PRIMASK(1);  		/* ���ж� */
-
-	/* FLASH ���� */
-	HAL_FLASH_Unlock();
-
-	for (i = 0; i < _ulSize / 32; i++)	
-	{
-		uint64_t FlashWord[4];
+    for (i = 8; i< _ulSize /32; i++) {
+       // eraseInitStruct.Page = page; // 设置当前擦除的页号
+       // HAL_FLASHEx_Erase(&eraseInitStruct, &pageError); // 调用擦除函数
+        
+       // uint32_t address = _ulFlashAddr;//FLASH_BASE + (page * FLASH_PAGE_SIZE); // 计算当前页的起始地址
+       uint64_t FlashWord[4];
 		
-		memcpy((char *)FlashWord, _ucpSrc, 32);
+	   memcpy((char *)FlashWord, _ucpSrc, 32);
 		_ucpSrc += 32;
-		
-		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, _ulFlashAddr, (uint64_t)((uint32_t)FlashWord)) == HAL_OK)
-		{
-			_ulFlashAddr = _ulFlashAddr + 32; /* ������������һ��256bit */				
-		}		
-		else
-		{
-			goto err;
-		}
-	}
-	
-	/* ���Ȳ���32�ֽ������� */
+
+      
+         if( HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, _ulFlashAddr, (uint64_t)((uint32_t)FlashWord))==HAL_OK){ // 写入数据
+            _ulFlashAddr = _ulFlashAddr + 32;//32 /* µÝÔö£¬²Ù×÷ÏÂÒ»¸ö256bit */	
+
+         }
+         else{
+
+           printf("flash write error\r\n");
+           goto err;
+         }
+        
+    }
+
+    /* ³¤¶È²»ÊÇ32×Ö½ÚÕûÊý±¶ */
 	if (_ulSize % 32)
 	{
 		uint64_t FlashWord[4];
@@ -327,34 +343,99 @@ uint8_t bsp_WriteCpuFlash(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _ulS
 		FlashWord[2] = 0;
 		FlashWord[3] = 0;
 		memcpy((char *)FlashWord, _ucpSrc, _ulSize % 32);
-		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, _ulFlashAddr, (uint64_t)((uint32_t)FlashWord)) == HAL_OK)
+		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, _ulFlashAddr, (uint64_t)((uint32_t)FlashWord)) == HAL_OK)
 		{
 			; // _ulFlashAddr = _ulFlashAddr + 32;		
 		}		
 		else
 		{
+			printf("flash write error\r\n");//
 			goto err;
 		}
 	}
-	
-  	/* Flash ��������ֹдFlash���ƼĴ��� */
-  	HAL_FLASH_Lock();
 
-  	__set_PRIMASK(0);  		/* ���ж� */
+    HAL_FLASH_Lock(); // 锁定Flash
+    __set_PRIMASK(0);  		/* turn on interrupt */
 
 	return 0;
-	
+
 err:
-  	/* Flash ��������ֹдFlash���ƼĴ��� */
+   /* Flash ¼ÓËø£¬½ûÖ¹Ð´Flash¿ØÖÆ¼Ä´æÆ÷ */
   	HAL_FLASH_Lock();
 
-  	__set_PRIMASK(0);  		/* ���ж� */
+  	__set_PRIMASK(0);  		/* ¿ªÖÐ¶Ï */
 
 	return 1;
+
 }
 
 
 #endif 
 
 
+void Flash_Serial_WriteData(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _ulSize)
+{
+    /* 定义Flash写入结构体变量 */
+    FLASH_EraseInitTypeDef eraseInitStruct;
+
+    // 定义Flash写入变量
+    uint32_t data[512]; // 2KB数据缓冲区
+
+    //_ucpSrc = ;
+
+    // 写入Flash数据
+    eraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES; // 擦除类型为页
+    eraseInitStruct.Banks = FLASH_BANK_1; // 擦除的Flash Bank
+    eraseInitStruct.Page = 0; // 擦除的起始页号
+    eraseInitStruct.NbPages = 1; // 擦除的页数量
+
+    uint32_t pageError = 0; // 用于保存擦除错误的地址
+
+    // 写入连续的10个Flash页
+    HAL_FLASH_Unlock(); // 解锁Flash
+
+    for (uint32_t page = 8; page < 32; page++) {
+        eraseInitStruct.Page = page; // 设置当前擦除的页号
+        HAL_FLASHEx_Erase(&eraseInitStruct, &pageError); // 调用擦除函数
+        
+       // uint32_t address = FLASH_BASE + (page * FLASH_PAGE_SIZE); // 计算当前页的起始地址
+
+        for (uint32_t i = 0; i < 512; i++) {
+            HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, _ulFlashAddr, *_ucpSrc); // 写入数据
+            _ulFlashAddr += 4; // 增加4字节地址
+        }
+    }
+
+    HAL_FLASH_Lock(); // 锁定Flash
+
+
+
+}
+
+void Flash_Serial_ErasePage(void)
+{
+    // 定义Flash擦除结构体变量
+    FLASH_EraseInitTypeDef eraseInitStruct;
+
+    // 擦除Flash页
+    eraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES; // 擦除类型为页
+    eraseInitStruct.Banks = FLASH_BANK_1; // 擦除的Flash Bank
+    eraseInitStruct.Page = 8;//ApplicationAddress;//0; // 擦除的起始页号
+    eraseInitStruct.NbPages = 1; // 擦除的页数量
+
+    uint32_t pageError = 0; // 用于保存擦除错误的地址
+
+    // 擦除连续的10个Flash页
+    HAL_FLASH_Unlock(); // 解锁Flash
+
+    for (uint32_t page = 8; page < 32; page++) {
+        eraseInitStruct.Page = page; // 设置当前擦除的页号
+        HAL_FLASHEx_Erase(&eraseInitStruct, &pageError); // 调用擦除函数
+    }
+
+    HAL_FLASH_Lock(); // 锁定Flash
+
+
+
+}
 
