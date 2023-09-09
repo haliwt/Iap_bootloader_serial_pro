@@ -38,13 +38,15 @@ uint16_t PageSize = PAGE_SIZE;
 uint32_t EraseCounter = 0x0;
 uint32_t NbrOfPage = 0;
 //FLASH_Status FLASHStatus = FLASH_COMPLETE;
+HAL_StatusTypeDef  FLASHStatus = HAL_OK;
 
 uint32_t RamSource;
 extern uint8_t tab_1024[1024];
 uint32_t debug_counter;
-YMODEM_T ymodem_t;
+XMODEM_T xmodem_t;
 int32_t  packet_length;
 /* Private function prototypes -----------------------------------------------*/
+int8_t IAP_Handle_Recv_Packet(uint8_t *pPacketBuf,uint32_t PacketDataLength,uint32_t FileSize);
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -139,6 +141,7 @@ static int32_t Receive_Packet (uint8_t *data, int32_t *length, uint32_t timeout)
   *length = packet_size;
   return 0;
 }
+uint32_t TotalSize = 0;
 
 /**
   * @brief  Receive a file using the ymodem protocol
@@ -152,6 +155,17 @@ int32_t Ymodem_Receive (uint8_t *buf)
  // int32_t  packet_length;
   /* Initialize FlashDestination variable */
   FlashDestination = ApplicationAddress;
+
+    // 定义Flash擦除结构体变量
+    FLASH_EraseInitTypeDef eraseInitStruct;
+
+    // 擦除Flash页
+    eraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES; // 擦除类型为页
+    eraseInitStruct.Banks = FLASH_BANK_1; // 擦除的Flash Bank
+    eraseInitStruct.Page = 8;//ApplicationAddress;//0; // 擦除的起始页号
+    eraseInitStruct.NbPages = 1; // 擦除的页数量
+
+    uint32_t pageError = 0; // 用于保存擦除错误的地址
 
   for (session_done = 0, errors = 0, session_begin = 0; ;)
   {
@@ -211,13 +225,15 @@ int32_t Ymodem_Receive (uint8_t *buf)
                     /* Erase the needed pages where the user application will be loaded */
                     /* Define the number of page to be erased */
                     NbrOfPage = FLASH_PagesMask(size);
-                    Flash_Serial_ErasePage(NbrOfPage);
-                    ymodem_t.size =  NbrOfPage;
+                    eraseInitStruct.Page = 8+ NbrOfPage  ;//NbrOfPage;//ApplicationAddress;//0; // 擦除的起始页号
+                   // Flash_Serial_ErasePage(NbrOfPage);
+                   // ymodem_t.size =  NbrOfPage;
                     /* Erase the FLASH pages */
-//                    for (EraseCounter = 0; (EraseCounter < NbrOfPage) && (FLASHStatus == FLASH_COMPLETE); EraseCounter++)
-//                    {
-//                      FLASHStatus = FLASH_ErasePage(FlashDestination + (PageSize * EraseCounter));
-//                    }
+                    for (EraseCounter = 0; (EraseCounter < NbrOfPage) && (FLASHStatus == HAL_OK); EraseCounter++)
+                    {
+                      //FLASHStatus = FLASH_ErasePage(FlashDestination + (PageSize * EraseCounter));
+                    FLASHStatus=  HAL_FLASHEx_Erase(&eraseInitStruct, &pageError); // 调用擦除函数
+                    }
                     Send_Byte(ACK);
                     Send_Byte(CRC16);
                   }
@@ -233,29 +249,20 @@ int32_t Ymodem_Receive (uint8_t *buf)
                 /* Data packet */
                 else
                 {
-                  memcpy(buf_ptr, packet_data + PACKET_HEADER, packet_length);
-                  RamSource = (uint32_t)buf;
-                  for (j = 0;(j < packet_length) && (FlashDestination <  ApplicationAddress + size);j += 4)
+                   buf_ptr = packet_data + PACKET_HEADER;
+
+                  //½ÓÊÕµ½Ò»¸öÊý¾Ý°üºóµÄ´¦Àíº¯Êý
+                  if(0 != IAP_Handle_Recv_Packet(buf_ptr,packet_length,size))
                   {
-                    /* Program the data received into STM32F10x Flash */
-                    debug_counter++ ;
-                    //FLASH_ProgramWord(FlashDestination, *(uint32_t*)RamSource);
-                   // HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD,FlashDestination, *(uint32_t*)RamSource);
-                    Flash_Serial_WriteData(FlashDestination, *(uint32_t*)RamSource, packet_length); //tab_1024
-                   
-                  
-                    if (*(uint32_t*)FlashDestination == *(uint32_t*)RamSource)
-                    {
-                      /* End session */
-                      Send_Byte(CA);
-                      Send_Byte(CA);
-                      return -2;
-                    }
-                    FlashDestination += 4;
-                    RamSource += 4;
+                    /* End session */
+                    Send_Byte(CA);
+                    Send_Byte(CA); 
+                    return -2;
+                  }
+                   Send_Byte(ACK);
                  }
-                  Send_Byte(ACK);
-                }
+                  
+              
                 packets_received ++;
                 session_begin = 1;
               }
@@ -397,6 +404,33 @@ uint16_t UpdateCRC16(uint16_t crcIn, uint8_t byte)
  }
  while(!(in&0x10000));
  return crc&0xffffu;
+}
+/**
+  * @brief  Xmodem  CRC16 for input byte
+  * @param  CRC input value 
+  * @param  input byte
+   * @retval None
+*/
+uint16_t Xmodem_CRC16(uint8_t *data,uint16_t datalen)
+{
+     uint8_t i;
+     uint16_t Crcinit = 0x0000;
+     uint16_t Crcipoly =0x1021;
+
+     while(datalen --){
+       Crcinit =  (*data <<8)^Crcinit;
+       for(i=0;i<8;i++){
+
+            if(Crcinit & 0x8000)
+               Crcinit= (Crcinit<<1)^Crcipoly;
+            else
+               Crcinit= (Crcinit<<1);
+       }
+       data++;
+
+     }
+     
+     return Crcinit;
 }
 
 
@@ -677,4 +711,54 @@ uint8_t Ymodem_Transmit (uint8_t *buf, const uint8_t* sendFileName, uint32_t siz
   }
   return 0; /* file trasmitted successfully */
 }
+
+void IAP_Handle_Recv_File_Head(uint32_t FileSize)
+{
+    /* Initialize FlashDestination variable */
+    FlashDestination = ApplicationAddress;
+
+    // 定义Flash擦除结构体变量
+    FLASH_EraseInitTypeDef eraseInitStruct;
+
+    // 擦除Flash页
+    eraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES; // 擦除类型为页
+    eraseInitStruct.Banks = FLASH_BANK_1; // 擦除的Flash Bank
+    eraseInitStruct.Page = 8;//ApplicationAddress;//0; // 擦除的起始页号
+    eraseInitStruct.NbPages = 1; // 擦除的页数量
+
+    uint32_t pageError = 0; // 用于保存擦除错误的地址
+    
+    /* Erase the needed pages where the user application will be loaded */
+    /* Define the number of page to be erased */
+    NbrOfPage = FLASH_PagesMask(FileSize);
+
+    /* Erase the FLASH pages */
+    for(EraseCounter = 0; (EraseCounter < (8+NbrOfPage)) && (FLASHStatus == HAL_OK); EraseCounter++)
+    {
+      //FLASHStatus = FLASH_ErasePage(FlashDestination + (PageSize * EraseCounter));
+       FLASHStatus =HAL_FLASHEx_Erase(&eraseInitStruct,&pageError);
+    }
+}
+
+int8_t IAP_Handle_Recv_Packet(uint8_t *pPacketBuf,uint32_t PacketDataLength,uint32_t FileSize)
+{
+    uint32_t j;
+    RamSource = (uint32_t)pPacketBuf;
+    for (j = 0;(j < PacketDataLength) && (FlashDestination <  ApplicationAddress + FileSize);j += 8)
+    {
+        /* Program the data received into STM32F10x Flash */
+      //  FLASH_ProgramWord(FlashDestination, *(uint32_t*)RamSource);
+        HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, FlashDestination, *(uint64_t*)RamSource);
+
+        if (*(uint32_t*)FlashDestination != *(uint32_t*)RamSource)
+        {
+          return -2;
+        }
+        FlashDestination += 8;
+        RamSource += 8;
+    }
+
+    return 0;
+}
+
 

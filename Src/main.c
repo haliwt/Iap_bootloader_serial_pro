@@ -29,21 +29,10 @@
 #include "iap.h"
 /* USER CODE END Includes */
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-//typedef  void (*pFunction)(void);
-//#define APPLICATION_ADDRESS     (uint32_t)0x08004000      /* Start user code address: ADDR_FLASH_PAGE_8 */
-//pFunction JumpToApplication;
-//uint32_t JumpAddress;
-/* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define FLASH_USER_START_ADDR   (FLASH_BASE + (16 * FLASH_PAGE_SIZE))   /* Start @ of user Flash area */
-#define FLASH_USER_END_ADDR     (FLASH_USER_START_ADDR + FLASH_PAGE_SIZE)   /* End @ of user Flash area */
 
-//#define DATA_64                 ((uint64_t)0x1234567812345678)
-//#define DATA_32                 ((uint32_t)0x12345678)
 
 /* USER CODE END PD */
 
@@ -55,17 +44,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-//uint32_t FirstPage = 0, NbOfPages = 0;
-//uint32_t Address = 0, PageError = 0;
-//__IO uint32_t data32 = 0 , MemoryProgramStatus = 0;
 
-/*Variable used for Erase procedure*/
-//static FLASH_EraseInitTypeDef EraseInitStruct;
- uint8_t t;
-    uint8_t key;
-    uint32_t oldcount = 0;      /* 老的串口接收数据值 */
-    uint32_t applenth = 0;      /* 接收到的app代码长度 */
-    uint8_t clearflag = 0;
+
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -139,14 +121,14 @@ int main(void)
   printf("bootloader!\r\n");
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  Main_Menu();
+ Main_Menu();
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
    
-   
+    
   }
   
   /* USER CODE END 3 */

@@ -23,7 +23,7 @@
 #ifndef _YMODEM_H_
 #define _YMODEM_H_
 #include "main.h"
-
+#include "common.h"
 /* Includes ------------------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -53,7 +53,7 @@
 
 #define NAK_TIMEOUT             (0x100000)
 #define MAX_ERRORS              (5)
-
+#define STM32_PAGE_SIZE         0x0800
 typedef enum
 { 
   YMODEM_FLASH_BUSY = 1,
@@ -63,14 +63,16 @@ typedef enum
   YMODEM_FLASH_TIMEOUT
 }FLASH_Status;
 
-typedef struct _ymodem_{
+typedef struct _xmodem_{
 
-  uint32_t size;
+  uint8_t flash_erase_flag;
+  uint8_t Updatebuff[STM32_PAGE_SIZE];
+  uint32_t XmodeTimer;
 
 
-}YMODEM_T;
+}XMODEM_T;
 
-extern YMODEM_T ymodem_t;
+extern XMODEM_T xmodem_t;
 
 extern uint8_t UartRecBuf[128] ;//={0};
 extern uint8_t FileName[1024];
@@ -81,6 +83,8 @@ extern uint8_t flash_erase_times;
 int32_t Ymodem_Receive (uint8_t *);
 uint8_t Ymodem_Transmit (uint8_t *,const  uint8_t* , uint32_t );
 int32_t Ymodem_Receive_128Bytes(uint8_t *buf, uint32_t appadr);
+uint16_t Xmodem_CRC16(uint8_t *data,uint16_t datalen);
+
 #endif  /* _YMODEM_H_ */
 
 /*******************(C)COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/

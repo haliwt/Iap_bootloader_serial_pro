@@ -54,16 +54,27 @@ void SerialDownload(void)
 {
   uint8_t Number[10] = "          ";
   int32_t Size = 0;
-
   SerialPutString("Waiting for the file to be sent ... (press 'a' to abort)\n\r");
   
-//   if(flash_erase_times ==0){
-//         flash_erase_times++;
-//         Flash_Serial_ErasePage(ymodem_t.size);
-//         printf("flas erase is over \r\n");
-//    }
-   Size = Ymodem_Receive(&tab_1024[0]);
-  // Size = Ymodem_Receive_128Bytes(UartRecBuf,AppAddr);
+   if(flash_erase_times ==0){
+         flash_erase_times++;
+        Flash_Serial_ErasePage();
+        printf("flas erase is over \r\n");
+         xmodem_t.XmodeTimer =0;
+         xmodem_t.flash_erase_flag =1;
+    }
+    
+
+   if(xmodem_t.flash_erase_flag ==1){
+      if(xmodem_t.XmodeTimer >=1000){
+         xmodem_t.XmodeTimer =0;
+         printf("C");
+
+      }
+     xmodem_t.XmodeTimer++;
+
+    }
+ 
   if (Size > 0)
   {
     SerialPutString("\n\n\r Programming Completed Successfully!\n\r--------------------------------\r\n Name: ");
