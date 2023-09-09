@@ -39,7 +39,7 @@ __IO uint32_t FlashProtection = 0;
 extern uint32_t FlashDestination;
 FLASH_Status FLASH_DET;
 uint8_t flash_erase_times;
-
+uint32_t pagenumber = 0x0;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -305,7 +305,7 @@ void GetInputString (uint8_t * buffP)
   */
 uint32_t FLASH_PagesMask(__IO uint32_t Size)
 {
-  uint32_t pagenumber = 0x0;
+ // uint32_t pagenumber = 0x0;
   uint32_t size = Size;
 
   if ((size % PAGE_SIZE) != 0)

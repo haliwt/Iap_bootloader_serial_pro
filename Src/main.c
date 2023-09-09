@@ -129,87 +129,7 @@ int main(void)
   
   /* Erase the user Flash area
     (area defined by FLASH_USER_START_ADDR and FLASH_USER_END_ADDR) ***********/
-#if 0
 
-  /* Get the 1st page to erase */
-  FirstPage = GetPage(FLASH_USER_START_ADDR);
-
-  /* Get the number of pages to erase from 1st page */
-  NbOfPages = 1;//GetPage(FLASH_USER_END_ADDR) - FirstPage + 1;
-
-  /* Fill EraseInit structure*/
-  EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
-  EraseInitStruct.Page        = FirstPage;
-  EraseInitStruct.NbPages     = NbOfPages;
-
-  /* Note: If an erase operation in Flash memory also concerns data in the data or instruction cache,
-     you have to make sure that these data are rewritten before they are accessed during code
-     execution. If this cannot be done safely, it is recommended to flush the caches by setting the
-     DCRST and ICRST bits in the FLASH_CR register. */
-  if (HAL_FLASHEx_Erase(&EraseInitStruct, &PageError) != HAL_OK)
-  {
-    /*
-      Error occurred while page erase.
-      User can add here some code to deal with this error.
-      PageError will contain the faulty page and then to know the code error on this page,
-      user can call function 'HAL_FLASH_GetError()'
-    */
-    /* Infinite loop */
-
-  }
-
-  /* Program the user Flash area word by word
-    (area defined by FLASH_USER_START_ADDR and FLASH_USER_END_ADDR) ***********/
-
-  Address = FLASH_USER_START_ADDR;
-
-  while (Address < FLASH_USER_END_ADDR)
-  {
-    if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, Address, DATA_64) == HAL_OK)
-    {
-      Address = Address + 8;
-    }
-   else
-    {
-      /* Error occurred while writing data in Flash memory.
-         User can add here some code to deal with this error */
-
-    }
-  }
-
-  /* Lock the Flash to disable the flash control register access (recommended
-     to protect the FLASH memory against possible unwanted operation) *********/
-  HAL_FLASH_Lock();
-
-  /* Check if the programmed data is OK
-      MemoryProgramStatus = 0: data programmed correctly
-      MemoryProgramStatus != 0: number of words not programmed correctly ******/
-  Address = FLASH_USER_START_ADDR;
-  MemoryProgramStatus = 0x0;
-
-  while (Address < FLASH_USER_END_ADDR)
-  {
-    data32 = *(__IO uint32_t *)Address;
-
-    if (data32 != DATA_32)
-    {
-      MemoryProgramStatus++;
-    }
-    Address = Address + 4;
-  }
-
-  /*Check if there is an issue to program data*/
-  if (MemoryProgramStatus == 0)
-  {
-    /* No error detected. Switch on LED0*/
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
-  }
-  else
-  {
-    /* Error detected. LED0 will blink with 1s period */
-
-  }
- #endif 
     for (int j=0;j<10;j++)
     {
       HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
@@ -226,44 +146,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
    
-    #if 0
-     if (g_usart_rx_cnt)
-     {
-              t=0;
-         if (oldcount == g_usart_rx_cnt)   /* 新周期内,没有收到任何数据,认为本次数据接收完成 */
-            {
-                applenth = g_usart_rx_cnt;
-                oldcount = 0;
-                g_usart_rx_cnt = 0;
-                printf("用户程序接收完成!\r\n");
-                printf("代码长度:%dBytes\r\n", applenth);
-                
-            }
-            else oldcount = g_usart_rx_cnt;
-      }
-     
-    HAL_Delay(100);
-    if(applenth){ 
-      iap_write_appbin(FLASH_APP1_ADDR, g_usart_rx_buf, applenth);            /* 更新FLASH代码 */
-       key=1;
-       printf("key = %d\r\n",key);
-    }
-    t++;
-    if(t > 10){
-    key=1;
-    
-    }
    
- /* Jump to user application */
-    if(key ==1){
-//      JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
-//      JumpToApplication = (pFunction) JumpAddress;
-//      /* Initialize user application's Stack Pointer */
-//      __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
-//      JumpToApplication();
-        iap_load_app(0x20001000);
-    }
-     #endif 
   }
   
   /* USER CODE END 3 */

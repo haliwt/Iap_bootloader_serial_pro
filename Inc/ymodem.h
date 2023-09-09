@@ -63,6 +63,15 @@ typedef enum
   YMODEM_FLASH_TIMEOUT
 }FLASH_Status;
 
+typedef struct _ymodem_{
+
+  uint32_t size;
+
+
+}YMODEM_T;
+
+extern YMODEM_T ymodem_t;
+
 extern uint8_t UartRecBuf[128] ;//={0};
 extern uint8_t FileName[1024];
 extern uint8_t flash_erase_times;

@@ -41,7 +41,9 @@ uint32_t NbrOfPage = 0;
 
 uint32_t RamSource;
 extern uint8_t tab_1024[1024];
-
+uint32_t debug_counter;
+YMODEM_T ymodem_t;
+int32_t  packet_length;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -146,8 +148,8 @@ static int32_t Receive_Packet (uint8_t *data, int32_t *length, uint32_t timeout)
 int32_t Ymodem_Receive (uint8_t *buf)
 {
   uint8_t packet_data[PACKET_1K_SIZE + PACKET_OVERHEAD], file_size[FILE_SIZE_LENGTH], *file_ptr, *buf_ptr;
-  int32_t i, j, packet_length, session_done, file_done, packets_received, errors, session_begin, size = 0;
-
+  int32_t i, j, session_done, file_done, packets_received, errors, session_begin,size=0; 
+ // int32_t  packet_length;
   /* Initialize FlashDestination variable */
   FlashDestination = ApplicationAddress;
 
@@ -208,9 +210,10 @@ int32_t Ymodem_Receive (uint8_t *buf)
 
                     /* Erase the needed pages where the user application will be loaded */
                     /* Define the number of page to be erased */
-//                    NbrOfPage = FLASH_PagesMask(size);
-//
-//                    /* Erase the FLASH pages */
+                    NbrOfPage = FLASH_PagesMask(size);
+                    Flash_Serial_ErasePage(NbrOfPage);
+                    ymodem_t.size =  NbrOfPage;
+                    /* Erase the FLASH pages */
 //                    for (EraseCounter = 0; (EraseCounter < NbrOfPage) && (FLASHStatus == FLASH_COMPLETE); EraseCounter++)
 //                    {
 //                      FLASHStatus = FLASH_ErasePage(FlashDestination + (PageSize * EraseCounter));
@@ -235,10 +238,13 @@ int32_t Ymodem_Receive (uint8_t *buf)
                   for (j = 0;(j < packet_length) && (FlashDestination <  ApplicationAddress + size);j += 4)
                   {
                     /* Program the data received into STM32F10x Flash */
+                    debug_counter++ ;
                     //FLASH_ProgramWord(FlashDestination, *(uint32_t*)RamSource);
-                    HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD,FlashDestination, *(uint32_t*)RamSource);
-
-                    if (*(uint32_t*)FlashDestination != *(uint32_t*)RamSource)
+                   // HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD,FlashDestination, *(uint32_t*)RamSource);
+                    Flash_Serial_WriteData(FlashDestination, *(uint32_t*)RamSource, packet_length); //tab_1024
+                   
+                  
+                    if (*(uint32_t*)FlashDestination == *(uint32_t*)RamSource)
                     {
                       /* End session */
                       Send_Byte(CA);
@@ -247,7 +253,7 @@ int32_t Ymodem_Receive (uint8_t *buf)
                     }
                     FlashDestination += 4;
                     RamSource += 4;
-                  }
+                 }
                   Send_Byte(ACK);
                 }
                 packets_received ++;

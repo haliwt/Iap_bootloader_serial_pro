@@ -57,11 +57,11 @@ void SerialDownload(void)
 
   SerialPutString("Waiting for the file to be sent ... (press 'a' to abort)\n\r");
   
-   if(flash_erase_times ==0){
-         flash_erase_times++;
-         Flash_Serial_ErasePage();
-         printf("flas erase is over \r\n");
-    }
+//   if(flash_erase_times ==0){
+//         flash_erase_times++;
+//         Flash_Serial_ErasePage(ymodem_t.size);
+//         printf("flas erase is over \r\n");
+//    }
    Size = Ymodem_Receive(&tab_1024[0]);
   // Size = Ymodem_Receive_128Bytes(UartRecBuf,AppAddr);
   if (Size > 0)

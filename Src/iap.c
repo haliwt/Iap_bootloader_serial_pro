@@ -373,7 +373,7 @@ err:
 #endif 
 
 
-void Flash_Serial_WriteData(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _ulSize)
+void Flash_Serial_WriteData(uint32_t _ulFlashAddr, uint32_t _ucpSrc, uint32_t _ulSize)
 {
     /* 定义Flash写入结构体变量 */
     FLASH_EraseInitTypeDef eraseInitStruct;
@@ -394,16 +394,16 @@ void Flash_Serial_WriteData(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _u
     // 写入连续的10个Flash页
     HAL_FLASH_Unlock(); // 解锁Flash
 
-    for (uint32_t page = 8; page < 32; page++) {
-        eraseInitStruct.Page = page; // 设置当前擦除的页号
-        HAL_FLASHEx_Erase(&eraseInitStruct, &pageError); // 调用擦除函数
+    for (uint32_t page = 8; page <  (8+ymodem_t.size+1); page++) {
+       // eraseInitStruct.Page = page; // 设置当前擦除的页号
+       // HAL_FLASHEx_Erase(&eraseInitStruct, &pageError); // 调用擦除函数
         
        // uint32_t address = FLASH_BASE + (page * FLASH_PAGE_SIZE); // 计算当前页的起始地址
 
-        for (uint32_t i = 0; i < 512; i++) {
-            HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, _ulFlashAddr, *_ucpSrc); // 写入数据
+        //for (uint32_t i = 0; i < 2048; i++) {
+            HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, _ulFlashAddr, _ucpSrc); // 写入数据
             _ulFlashAddr += 4; // 增加4字节地址
-        }
+        //}
     }
 
     HAL_FLASH_Lock(); // 锁定Flash
@@ -412,7 +412,7 @@ void Flash_Serial_WriteData(uint32_t _ulFlashAddr, uint8_t *_ucpSrc, uint32_t _u
 
 }
 
-void Flash_Serial_ErasePage(void)
+void Flash_Serial_ErasePage(uint32_t page_max)
 {
     // 定义Flash擦除结构体变量
     FLASH_EraseInitTypeDef eraseInitStruct;
@@ -428,7 +428,7 @@ void Flash_Serial_ErasePage(void)
     // 擦除连续的10个Flash页
     HAL_FLASH_Unlock(); // 解锁Flash
 
-    for (uint32_t page = 8; page < 32; page++) {
+    for (uint32_t page = 8; page < (8+page_max); page++) {
         eraseInitStruct.Page = page; // 设置当前擦除的页号
         HAL_FLASHEx_Erase(&eraseInitStruct, &pageError); // 调用擦除函数
     }
