@@ -27,7 +27,7 @@
 #include "string.h"
 #include "main.h"
 #include "ymodem.h"
-#include "usart.h" 
+
 
 /* Exported types ------------------------------------------------------------*/
 typedef  void (*pFunction)(void);
@@ -36,7 +36,7 @@ typedef  void (*pFunction)(void);
 /* Constants used by Serial Command Line Mode */
 #define CMD_STRING_SIZE       128
 
-#define ApplicationAddress    0x08004000  //8003000->12KB of flash memory
+#define ApplicationAddress    0x8004000  //12KB of flash memory
 
 #if defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)
  #define PAGE_SIZE                         (0x400)    /* 1 Kbyte */
@@ -52,8 +52,8 @@ typedef  void (*pFunction)(void);
  #define FLASH_SIZE                        (0x100000) /* 1 MByte */
 #else 
  //#error "Please select first the STM32 device to be used (in stm32f10x.h)" 
- #define PAGE_SIZE                         (0x800)    /* 2 Kbyte */
- #define YMODEM_FLASH_SIZE                  (0x10000)  /* 64 KBytes */
+ #define YMODEM_PAGE_SIZE              (0x800)    /* 2 Kbytes */
+ #define YMODEM_FLASH_SIZE             (0x10000)  /* 64 KBytes */            
 #endif
 
 /* Compute the FLASH upload image size */  
@@ -83,7 +83,7 @@ void SerialPutChar(uint8_t c);
 void Serial_PutString(uint8_t *s);
 void GetInputString(uint8_t * buffP);
 uint32_t FLASH_PagesMask(__IO uint32_t Size);
-void FLASH_DisableWriteProtectionPages(void);
+//void FLASH_DisableWriteProtectionPages(void);
 void Main_Menu(void);
 void SerialDownload(void);
 void SerialUpload(void);

@@ -1,23 +1,12 @@
 /* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file    FLASH/FLASH_EraseProgram/Src/main.c
-  * @author  MCD Application Team
-  * @brief   This example provides a description of how to erase and program the
-  *          STM32G0xx FLASH.
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2018 STMicroelectronics. 
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the 
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
+/***************************************************************************//**
+  文件: main.c
+  作者: Zhengyu https://gzwelink.taobao.com
+  版本: V1.0.0
+  时间: 20200401
+	平台:MINI-G030C8T6
+
+*******************************************************************************/
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -26,13 +15,19 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "iap.h"
+#include "common.h"
+#include "ymodem.h"
+
+
 /* USER CODE END Includes */
 
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 
 /* USER CODE END PD */
 
@@ -45,16 +40,13 @@
 
 /* USER CODE BEGIN PV */
 
-
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+void SystemClock_Config(void);
 
-//static uint32_t GetPage(uint32_t Address);
 
 /* USER CODE END PFP */
 
@@ -79,9 +71,9 @@ int main(void)
          handled in milliseconds basis.
        - Low Level Initialization
      */
-    
+
   /* USER CODE END 1 */
-   
+
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -97,7 +89,6 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
-  
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
@@ -105,32 +96,22 @@ int main(void)
   /* USER CODE BEGIN 2 */
   /* Initialize LED0 */
 
-
-  /* Unlock the Flash to enable the flash control register access *************/
-  HAL_FLASH_Unlock();
-  
-  /* Erase the user Flash area
-    (area defined by FLASH_USER_START_ADDR and FLASH_USER_END_ADDR) ***********/
-
-    for (int j=0;j<10;j++)
+  for (int j=0;j<15;j++)//LED闪烁1秒
     {
       HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
       HAL_Delay(100);
     }
   /* USER CODE END 2 */
-  printf("bootloader!\r\n");
+   Main_Menu();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
- Main_Menu();
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-   
-    
+
   }
-  
   /* USER CODE END 3 */
 }
 
@@ -150,14 +131,16 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV1;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
-  RCC_OscInitStruct.PLL.PLLN = 16;
+  RCC_OscInitStruct.PLL.PLLN = 9;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV6;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -171,7 +154,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -188,7 +171,7 @@ void SystemClock_Config(void)
   */
 //static uint32_t GetPage(uint32_t Addr)
 //{
-//  return (Addr - FLASH_BASE) / FLASH_PAGE_SIZE;//(Add-0x08000000)/0x800
+//  return (Addr - FLASH_BASE) / FLASH_PAGE_SIZE;;
 //}
 
 

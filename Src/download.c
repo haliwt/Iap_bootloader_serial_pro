@@ -24,23 +24,16 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "common.h"
-#include "ymodem.h"
-#include "iap.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-#define AppAddr  0x08004000    /* APPµØÖ· */
 extern uint8_t file_name[FILE_NAME_LENGTH];
 uint8_t tab_1024[1024] =
-{ 
+  {
     0
-};
- 
-uint8_t UartRecBuf[128]={0};
-uint8_t FileName[1024];
-
+  };
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -54,27 +47,9 @@ void SerialDownload(void)
 {
   uint8_t Number[10] = "          ";
   int32_t Size = 0;
+
   SerialPutString("Waiting for the file to be sent ... (press 'a' to abort)\n\r");
-  
-   if(flash_erase_times ==0){
-         flash_erase_times++;
-        Flash_Serial_ErasePage();
-        printf("flas erase is over \r\n");
-         xmodem_t.XmodeTimer =0;
-         xmodem_t.flash_erase_flag =1;
-    }
-    
-
-   if(xmodem_t.flash_erase_flag ==1){
-      if(xmodem_t.XmodeTimer >=1000){
-         xmodem_t.XmodeTimer =0;
-         printf("C");
-
-      }
-     xmodem_t.XmodeTimer++;
-
-    }
- 
+  Size = Ymodem_Receive(&tab_1024[0]);
   if (Size > 0)
   {
     SerialPutString("\n\n\r Programming Completed Successfully!\n\r--------------------------------\r\n Name: ");

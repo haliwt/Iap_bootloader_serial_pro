@@ -25,7 +25,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "common.h"
 #include "ymodem.h"
-#include "main.h"
 #include "usart.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,9 +36,7 @@ uint32_t JumpAddress;
 uint32_t BlockNbr = 0, UserMemoryMask = 0;
 __IO uint32_t FlashProtection = 0;
 extern uint32_t FlashDestination;
-FLASH_Status FLASH_DET;
-uint8_t flash_erase_times;
-uint32_t pagenumber = 0x0;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -200,6 +197,16 @@ uint32_t GetIntegerInput(int32_t * num)
 uint32_t SerialKeyPressed(uint8_t *key)
 {
 
+//  if ( USART_GetFlagStatus(EVAL_COM1, USART_FLAG_RXNE) != RESET)
+//  {
+//    *key = (uint8_t)EVAL_COM1->DR;
+//    return 1;
+//  }
+//  else
+//  {
+//    return 0;
+//  }
+//  
   if(__HAL_UART_GET_FLAG(&huart1,UART_FLAG_RXNE) != RESET)//if(USART_GetFlagStatus(USART1, USART_FLAG_RXNE) != RESET)
   {
     *key = (uint8_t)USART1->RDR;
@@ -236,8 +243,10 @@ uint8_t GetKey(void)
   */
 void SerialPutChar(uint8_t c)
 {
- 
-  //USART_SendData(USART1, c);
+//  USART_SendData(EVAL_COM1, c);
+//  while (USART_GetFlagStatus(EVAL_COM1, USART_FLAG_TXE) == RESET)
+//  {
+//  }
   HAL_UART_Transmit(&huart1,&c,0x01,0xffff);
   while(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_TXE) == RESET)//while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
   {
@@ -305,16 +314,16 @@ void GetInputString (uint8_t * buffP)
   */
 uint32_t FLASH_PagesMask(__IO uint32_t Size)
 {
- // uint32_t pagenumber = 0x0;
+  uint32_t pagenumber = 0x0;
   uint32_t size = Size;
 
-  if ((size % PAGE_SIZE) != 0)
+  if ((size % YMODEM_PAGE_SIZE) != 0)
   {
-    pagenumber = (size / PAGE_SIZE) + 1;
+    pagenumber = (size / YMODEM_PAGE_SIZE) + 1;
   }
   else
   {
-    pagenumber = size / PAGE_SIZE;
+    pagenumber = size / YMODEM_PAGE_SIZE;
   }
   return pagenumber;
 
@@ -329,8 +338,8 @@ uint32_t FLASH_PagesMask(__IO uint32_t Size)
 void FLASH_DisableWriteProtectionPages(void)
 {
   uint32_t useroptionbyte = 0, WRPR = 0;
-  uint16_t var1 = OB_IWDG_SW, var2 = OB_STOP_NORST , var3 = OB_STANDBY_NORST;//OB_STDBY_NoRST;
-  FLASH_Status status = YMODEM_FLASH_BUSY;
+  uint16_t var1 = OB_IWDG_SW, var2 = OB_STOP_NoRST, var3 = OB_STDBY_NoRST;
+  FLASH_Status status = FLASH_BUSY;
 
   WRPR = FLASH_GetWriteProtectionOptionByte();
 
@@ -362,13 +371,13 @@ void FLASH_DisableWriteProtectionPages(void)
       }
       if ((useroptionbyte & 0x04) == 0x0)
       {
-        var3 = OB_STANDBY_NORST;//OB_STDBY_RST;
+        var3 = OB_STDBY_RST;
       }
 
       FLASH_UserOptionByteConfig(var1, var2, var3);
     }
 
-    if (status == FLASH_DET)
+    if (status == FLASH_COMPLETE)
     {
       SerialPutString("Write Protection disabled...\r\n");
 
@@ -425,7 +434,7 @@ void Main_Menu(void)
 //  {
 //    FlashProtection = 0;
 //  }
- // HAL_FLASH_Unlock();
+
   while (1)
   {
     SerialPutString("\r\n================== Main Menu ============================\r\n\n");
@@ -445,19 +454,16 @@ void Main_Menu(void)
     if (key == 0x31) //0x31 = 0x01
     {
       /* Download user application in the Flash */
-     
       SerialDownload();
     }
     else if (key == 0x32)
     {
       /* Upload user application from the Flash */
-     // SerialUpload();
-      flash_erase_times=0;
+      SerialUpload();
     }
     else if (key == 0x33)
     {
-
-      SerialPutString("Execute App Program \r\n\n");
+      SerialPutString("Execute The New Program ------------------------------ 3\r\n\n");
       JumpAddress = *(__IO uint32_t*) (ApplicationAddress + 4);
 
       /* Jump to user application */
@@ -465,14 +471,12 @@ void Main_Menu(void)
       /* Initialize user application's Stack Pointer */
       __set_MSP(*(__IO uint32_t*) ApplicationAddress);
       Jump_To_Application();
-
     }
-    else if ((key == 0x34) && (FlashProtection == 1))
-    {
-      /* Disable the write protection of desired pages */
-      //FLASH_DisableWriteProtectionPages();
-        HAL_FLASH_Unlock();
-    }
+//    else if ((key == 0x34) && (FlashProtection == 1))
+//    {
+//      /* Disable the write protection of desired pages */
+//      FLASH_DisableWriteProtectionPages();
+//    }
     else
     {
       if (FlashProtection == 0)
