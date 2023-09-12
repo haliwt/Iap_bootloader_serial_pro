@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /***************************************************************************//**
-  ÎÄ¼þ: main.c
-  ×÷Õß: Zhengyu https://gzwelink.taobao.com
-  °æ±¾: V1.0.0
-  Ê±¼ä: 20200401
+  ï¿½Ä¼ï¿½: main.c
+  ï¿½ï¿½ï¿½ï¿½: Zhengyu https://gzwelink.taobao.com
+  ï¿½æ±¾: V1.0.0
+  Ê±ï¿½ï¿½: 20200401
 	Æ½Ì¨:MINI-G030C8T6
 
 *******************************************************************************/
@@ -17,6 +17,7 @@
 /* USER CODE BEGIN Includes */
 #include "common.h"
 #include "ymodem.h"
+
 
 
 /* USER CODE END Includes */
@@ -62,16 +63,6 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  /* STM32G0xx HAL library initialization:
-       - Configure the Flash prefetch
-       - Systick timer is configured by default as source of time base, but user 
-         can eventually implement his proper time base source (a general purpose 
-         timer for example or other time source), keeping in mind that Time base 
-         duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and 
-         handled in milliseconds basis.
-       - Low Level Initialization
-     */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -91,16 +82,16 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  //MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   /* Initialize LED0 */
 
-  for (int j=0;j<15;j++)//LEDÉÁË¸1Ãë
-    {
-      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
-      HAL_Delay(100);
-    }
+  // for (int j=0;j<15;j++)//LEDï¿½ï¿½Ë¸1ï¿½ï¿½
+  //   {
+  //     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+  //     HAL_Delay(100);
+  //   }
   /* USER CODE END 2 */
    Main_Menu();
   /* Infinite loop */

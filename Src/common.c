@@ -36,6 +36,7 @@ uint32_t JumpAddress;
 uint32_t BlockNbr = 0, UserMemoryMask = 0;
 __IO uint32_t FlashProtection = 0;
 extern uint32_t FlashDestination;
+uint32_t counter;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -231,6 +232,12 @@ uint8_t GetKey(void)
   while (1)
   {
     if (SerialKeyPressed((uint8_t*)&key)) break;
+    counter++;
+    if(counter > 1000000){
+        counter=0;
+        key=0x33;
+        break;
+    }
   }
   return key;
 
@@ -405,7 +412,7 @@ void FLASH_DisableWriteProtectionPages(void)
 void Main_Menu(void)
 {
   uint8_t key = 0;
-  
+  uint8_t power_on_times;
   /* Get the number of block (4 or 2 pages) from where the user program will be loaded */
   BlockNbr = (FlashDestination - 0x08000000) >> 12; //BlockNbr = 0x03
 
@@ -437,6 +444,8 @@ void Main_Menu(void)
 
   while (1)
   {
+   
+    
     SerialPutString("\r\n================== Main Menu ============================\r\n\n");
     SerialPutString("  Download Image To the STM32F10x Internal Flash ------- 1\r\n\n");
     SerialPutString("  Upload Image From the STM32F10x Internal Flash ------- 2\r\n\n");
@@ -448,6 +457,8 @@ void Main_Menu(void)
     }
     
     SerialPutString("==========================================================\r\n\n");
+   
+    
     
     key = GetKey();
 
@@ -472,11 +483,6 @@ void Main_Menu(void)
       __set_MSP(*(__IO uint32_t*) ApplicationAddress);
       Jump_To_Application();
     }
-//    else if ((key == 0x34) && (FlashProtection == 1))
-//    {
-//      /* Disable the write protection of desired pages */
-//      FLASH_DisableWriteProtectionPages();
-//    }
     else
     {
       if (FlashProtection == 0)
@@ -486,6 +492,7 @@ void Main_Menu(void)
       else
       {
         SerialPutString("Invalid Number ! ==> The number should be either 1, 2, 3 or 4\r");
+       
       } 
     }
   }

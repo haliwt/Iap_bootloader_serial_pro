@@ -265,8 +265,7 @@ int32_t Ymodem_Receive (uint8_t *buf)
                 {
 
                   memcpy(buf_ptr, packet_data + PACKET_HEADER, packet_length);
-                 // memcpy(buf_ptr, packet_data, packet_length);
-                  RamSource = (uint64_t)buf;
+                  RamSource = (uint64_t)buf;  //key statement.
                   for (j = 0;(j < packet_length) && (FlashDestination <  ApplicationAddress + size);j += 4)
                   {
                       ymodem_t.receive_data_write_flash++;
@@ -274,7 +273,6 @@ int32_t Ymodem_Receive (uint8_t *buf)
                     //FLASH_ProgramWord(FlashDestination, *(uint32_t*)RamSource);
                        HAL_FLASH_Unlock();
                        HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD ,FlashDestination,*(uint64_t*)(RamSource));
-                      // HAL_Delay(10);
                        HAL_FLASH_Lock();
 
                     if (*(uint32_t*)FlashDestination != *(uint32_t*)RamSource)
@@ -296,7 +294,7 @@ int32_t Ymodem_Receive (uint8_t *buf)
                 write_flag ++;
                 packets_received ++;
                
-                if(write_flag ==2){
+                if(write_flag ==2){ //64bit to write to flash
                     write_flag =0;
                // packets_received ++;
                 session_begin = 1;
