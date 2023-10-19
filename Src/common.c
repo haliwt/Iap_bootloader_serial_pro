@@ -447,9 +447,9 @@ void Main_Menu(void)
    
     
     SerialPutString("\r\n================== Main Menu ============================\r\n\n");
-    SerialPutString("  Download Image To the STM32F10x Internal Flash ------- 1\r\n\n");
-    SerialPutString("  Upload Image From the STM32F10x Internal Flash ------- 2\r\n\n");
-    SerialPutString("  Execute The New Program ------------------------------ 3\r\n\n");
+    SerialPutString("  Download Image To the STM32G030C8T6 Display IAP ------- 1\r\n\n");
+    SerialPutString("  Upload Image From the STM32G030C8T6 Display IAP ------- 2\r\n\n");
+    SerialPutString("  Execute The New Program ------------------------------- 3\r\n\n");
     
     if(FlashProtection != 0)
     {
