@@ -226,26 +226,10 @@ int32_t Ymodem_Receive (uint8_t *buf)
                       return -1;
                     }
 
-//                    /* Erase the needed pages where the user application will be loaded */
-//                    /* Define the number of page to be erased */
+                   /* Erase the needed pages where the user application will be loaded */
+                   /* Define the number of page to be erased */
                        NbrOfPage = FLASH_PagesMask(size);
-//
-//                    /* Erase the FLASH pages */1
-//                    for (EraseCounter = 0; (EraseCounter <  NbrOfPage) && (FLASHStatus == HAL_OK); EraseCounter++)
-//                    {
-//                      //FLASHStatus = FLASH_ErasePage(FlashDestination + (PageSize * EraseCounter));
-//                          /* Erase the user Flash area
-//                            (area defined by FLASH_USER_START_ADDR and FLASH_USER_END_ADDR) ***********/
-//                          /* Get the 1st page to erase */
-//                          ymodem_t.flash_erase_times++;
-//                          FirstPage = FlashDestination;//GetPage(FLASH_USER_START_ADDR);
-//                         // NbOfPages = 1;//
-//                          /* Fill EraseInit structure*/
-//                          EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
-//                          EraseInitStruct.Page        = FirstPage;
-//                          EraseInitStruct.NbPages     = NbrOfPage;
-//                        FLASHStatus = HAL_FLASHEx_Erase(&EraseInitStruct,&PageError);
-//                    }
+
                     Flash_Serial_ErasePage();
                    // HAL_Delay(10);
                     Send_Byte(ACK);
@@ -265,7 +249,7 @@ int32_t Ymodem_Receive (uint8_t *buf)
                 {
                   /* read data package*/
                   memcpy(buf_ptr, packet_data + PACKET_HEADER, packet_length);
-                  RamSource = (uint32_t)buf;//WT.edit 2023.10.19 //RamSource = (uint64_t)buf;  //key statement.
+                  RamSource = (uint64_t)buf;//(uint32_t)buf;//WT.edit 2023.10.19 //RamSource = (uint64_t)buf;  //key statement.
                   for (j = 0;(j < packet_length) && (FlashDestination <  ApplicationAddress + size);j += 4)
                   {
                     //  ymodem_t.receive_data_write_flash++;
