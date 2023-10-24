@@ -68,7 +68,8 @@ extern YMODE_T ymodem_t;
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-int32_t Ymodem_Receive (uint8_t *);
+//int32_t Ymodem_Receive (uint8_t *);
+int32_t Ymodem_Receive (uint8_t *buf,uint8_t flag);
 uint8_t Ymodem_Transmit (uint8_t *,const  uint8_t* , uint32_t );
 
 #endif  /* _YMODEM_H_ */
