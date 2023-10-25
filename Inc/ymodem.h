@@ -35,7 +35,7 @@
 #define PACKET_TRAILER          (2)
 #define PACKET_OVERHEAD         (PACKET_HEADER + PACKET_TRAILER)
 #define PACKET_SIZE             (128)
-#define PACKET_1K_SIZE          (1024)
+#define PACKET_1K_SIZE          (1024)//1024
 
 #define FILE_NAME_LENGTH        (256)
 #define FILE_SIZE_LENGTH        (16)
@@ -65,6 +65,7 @@ typedef struct _YMODEM_T{
 }YMODE_T;
 
 extern YMODE_T ymodem_t;
+extern int32_t packet_length_flag;
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
