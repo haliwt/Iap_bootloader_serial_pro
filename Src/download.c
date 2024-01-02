@@ -43,13 +43,13 @@ uint8_t tab_1024[1024] =
   * @param  None
   * @retval None
   */
-void SerialDownload(void)
+void SerialDownload(uint8_t flag)
 {
   uint8_t Number[10] = "          ";
   int32_t Size = 0;
 
   SerialPutString("Waiting for the file to be sent ... (press 'a' to abort)\n\r");
-  Size = Ymodem_Receive(&tab_1024[0]);
+  Size = Ymodem_Receive(&tab_1024[0],flag);
   if (Size > 0)
   {
     SerialPutString("\n\n\r Programming Completed Successfully!\n\r--------------------------------\r\n Name: ");

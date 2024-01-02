@@ -85,14 +85,7 @@ int main(void)
   //MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  /* Initialize LED0 */
-
-  // for (int j=0;j<15;j++)//LED��˸1��
-  //   {
-  //     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
-  //     HAL_Delay(100);
-  //   }
-  /* USER CODE END 2 */
+ 
    Main_Menu();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */

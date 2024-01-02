@@ -36,7 +36,7 @@ typedef  void (*pFunction)(void);
 /* Constants used by Serial Command Line Mode */
 #define CMD_STRING_SIZE       128
 
-#define ApplicationAddress    0x8004000  //16KB of flash memory
+#define ApplicationAddress    0x8003000  //12KB of flash memory
 
 #if defined (STM32F10X_MD) || defined (STM32F10X_MD_VL)
  #define PAGE_SIZE                         (0x400)    /* 1 Kbyte */
@@ -85,7 +85,7 @@ void GetInputString(uint8_t * buffP);
 uint32_t FLASH_PagesMask(__IO uint32_t Size);
 //void FLASH_DisableWriteProtectionPages(void);
 void Main_Menu(void);
-void SerialDownload(void);
+void SerialDownload(uint8_t flag);
 void SerialUpload(void);
 
 #endif  /* _COMMON_H */

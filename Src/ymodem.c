@@ -40,9 +40,17 @@ uint32_t NbrOfPage = 0;
 HAL_StatusTypeDef FLASHStatus = HAL_OK;
 uint64_t RamSource;
 extern uint8_t tab_1024[1024];
-
+uint8_t  Nb_arr[1];
 YMODE_T ymodem_t;
 
+//typedef enum
+//{ 
+//  FLASH_BUSY = 1,
+//  FLASH_ERROR_PG,
+//  FLASH_ERROR_WRP,
+//  FLASH_COMPLETE,
+//  FLASH_TIMEOUT
+//}FLASH_Status;
 
 /* USER CODE BEGIN PV */
 uint32_t FirstPage = 0;
@@ -52,8 +60,11 @@ uint32_t PageError = 0;
 static FLASH_EraseInitTypeDef EraseInitStruct;
 
 int32_t packet_length;
+int32_t packet_length_flag;
 uint8_t packet_data[PACKET_1K_SIZE + PACKET_OVERHEAD];
 int32_t packets_received;
+
+//FLASH_Status FLASHStatus ;
 
 uint32_t write_data_flah_flag;
 uint8_t write_flag;
@@ -161,12 +172,21 @@ static int32_t Receive_Packet (uint8_t *data, int32_t *length, uint32_t timeout)
   * @param  buf: Address of the first byte
   * @retval The size of the file
   */
-int32_t Ymodem_Receive (uint8_t *buf)
+int32_t Ymodem_Receive (uint8_t *buf,uint8_t flag)
 {
+   FLASH_EraseInitTypeDef eraseInitStruct;
   uint8_t packet_data[PACKET_1K_SIZE + PACKET_OVERHEAD]; 
   uint8_t  file_size[FILE_SIZE_LENGTH], *file_ptr;
   uint8_t  *buf_ptr;
-  int32_t i, j, session_done, file_done, errors, session_begin, size = 0;
+  int32_t i, j, session_done, file_done, errors, session_begin,size = 0;
+  static uint8_t re_flag;
+
+ 
+  eraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES; // 鎿﹂櫎绫诲��涓洪��1�7
+  eraseInitStruct.Banks = FLASH_BANK_1; // 鎿﹂櫎鐨凢lash Bank
+    eraseInitStruct.Page =(ApplicationAddress-FLASH_BASE)/FLASH_PAGE_SIZE ;//7;//ApplicationAddress;//0; // 鎿﹂櫎鐨勮捣濮嬮〉鍙?
+    eraseInitStruct.NbPages = 1;// (FLASH_USER_END_ADDR - FLASH_USER_START_ADDR)/FLASH_PAGE_SIZE;; // 鎿﹂櫎鐨勯��鏁伴噺
+  uint32_t pageError = 0; // 
   
   /* Initialize FlashDestination variable */
   FlashDestination = ApplicationAddress;
@@ -228,10 +248,37 @@ int32_t Ymodem_Receive (uint8_t *buf)
 
                    /* Erase the needed pages where the user application will be loaded */
                    /* Define the number of page to be erased */
-                       NbrOfPage = FLASH_PagesMask(size);
+                      NbrOfPage = FLASH_PagesMask(size) ;
+					  if(NbrOfPage % 2 ==0) Nb_arr[0]=1;
+					  else Nb_arr[0]=2;
+					  if(packet_length_flag==1)packet_length = packet_length + 8;
+				 /* Erase the FLASH pages */
+          switch(flag){
+            case 1:
+                switch(Nb_arr[0]){ 
+                  case 1:
+                  
+						for (EraseCounter = 0; (EraseCounter < (NbrOfPage)) && (FLASHStatus == HAL_OK); EraseCounter++)
+						{
+						//FLASHStatus = FLASH_ErasePage(FlashDestination + (PageSize * EraseCounter));
+                         eraseInitStruct.NbPages =NbrOfPage ;
+						FLASHStatus= HAL_FLASHEx_Erase(&eraseInitStruct, &pageError);
+						}
+						break;
 
-                    Flash_Serial_ErasePage();
-                   // HAL_Delay(10);
+						case 2:
+
+						Flash_Serial_ErasePage();
+
+						break;
+						}
+					break;
+
+					case 2:
+
+						Flash_Serial_ErasePage(); 
+					break;
+					}
                     Send_Byte(ACK);
                     Send_Byte(CRC16);
                   }
@@ -248,37 +295,75 @@ int32_t Ymodem_Receive (uint8_t *buf)
                 else
                 {
                   /* read data package*/
-                  memcpy(buf_ptr, packet_data + PACKET_HEADER, packet_length);
-                  RamSource = (uint64_t)buf;//(uint32_t)buf;//WT.edit 2023.10.19 //RamSource = (uint64_t)buf;  //key statement.
-                  for (j = 0;(j < packet_length) && (FlashDestination <  ApplicationAddress + size);j += 4)
-                  {
-                    //  ymodem_t.receive_data_write_flash++;
-                     /* Program the data received into STM32F10x Flash */
-                    //FLASH_ProgramWord(FlashDestination, *(uint32_t*)RamSource); //FLASH_TYPEPROGRAM_FAST
-                       HAL_FLASH_Unlock();
-                     HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD ,FlashDestination,*(uint64_t*)(RamSource));
-					 
-                      HAL_FLASH_Lock();
+			
+				  switch(flag){
+					  case 1:
+						    memcpy(buf_ptr, packet_data + PACKET_HEADER, packet_length);
+                             RamSource = (uint64_t)buf;//(uint32_t)buf;//WT.edit 2023.10.19 //RamSource = (uint64_t)buf;  //key statement.
+							for (j = 0;(j <( packet_length)) && (FlashDestination <  ApplicationAddress + size+8);j += 8)
+							{
+								//  ymodem_t.receive_data_write_flash++;
+								/* Program the data received into STM32F10x Flash */
+								//FLASH_ProgramWord(FlashDestination, *(uint32_t*)RamSource); //FLASH_TYPEPROGRAM_FAST
+								HAL_FLASH_Unlock();
+								 __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_OPTVERR);//?????
+								HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD ,FlashDestination,*(uint64_t*)(RamSource));
 
-                    if (*(uint32_t*)FlashDestination != *(uint32_t*)RamSource)
-                    {
-                      /* End session */
-                      Send_Byte(CA);
-                      Send_Byte(CA);
-                     
-                      return -2;
-                     }
-					
-                    FlashDestination += 4;
-                    RamSource += 4;
-				   }
+								HAL_FLASH_Lock();
+
+								if (*(uint64_t*)FlashDestination != *(uint64_t*)RamSource)
+								{
+								/* End session */
+								Send_Byte(CA);
+								Send_Byte(CA);
+
+								return -2;
+								}
+
+								FlashDestination += 8;
+								RamSource += 8;
+							}
+				       break;
+							
+					  case 2:
+						     memcpy(buf_ptr, packet_data + PACKET_HEADER, packet_length);
+                             RamSource = (uint32_t)buf;//(uint32_t)buf;//WT.edit 2023.10.19 //RamSource = (uint64_t)buf;  //key statement.
+						  for (j = 0;(j < packet_length) && (FlashDestination <  ApplicationAddress + (size+8) +8);j += 4)
+						  {
+								//  ymodem_t.receive_data_write_flash++;
+								/* Program the data received into STM32F10x Flash */
+								//FLASH_ProgramWord(FlashDestination, *(uint32_t*)RamSource); //FLASH_TYPEPROGRAM_FAST
+								HAL_FLASH_Unlock();
+							   __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_OPTVERR);//?????
+							   eraseInitStruct.NbPages =NbrOfPage ;
+								HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD ,FlashDestination,*(uint64_t*)(RamSource));
+
+								HAL_FLASH_Lock();
+
+								if (*(uint32_t*)FlashDestination != *(uint32_t*)RamSource)
+								{
+								/* End session */
+								Send_Byte(CA);
+								Send_Byte(CA);
+
+								return -2;
+								}
+
+								FlashDestination += 4;
+								RamSource += 4;
+							}
+						  
+					  break;
+					}
 					Send_Byte(ACK);
 				
                  }
                   
-				/* 接收数据包递增 */
+				/* 接收数据包��增 */
+				
 				packets_received ++;
 				session_begin = 1;
+				
 			}
           }
           break;
@@ -704,25 +789,25 @@ void Flash_Serial_ErasePage(void)
 {
   
     uint32_t i;
-    // 瀹氫箟Flash鎿﹂櫎缁撴瀯浣撳彉閲?
+    // 瀹氫箟Flash鎿﹂櫎缁撴��浣撳彉閄1�7?
     FLASH_EraseInitTypeDef eraseInitStruct;
-
-    // 鎿﹂櫎Flash椤?
-    eraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES; // 鎿﹂櫎绫诲瀷涓洪〉
-    eraseInitStruct.Banks = FLASH_BANK_1; // 鎿﹂櫎鐨凢lash Bank
+     HAL_FLASH_Unlock(); // 瑙ｉ攣Flash
+    // 鎿﹂櫎Flash椄1�7?
+    eraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES; // 鎿﹂櫎绫诲��涓洪��1�7
+  //  eraseInitStruct.Banks = FLASH_BANK_1; // 鎿﹂櫎鐨凢lash Bank
     eraseInitStruct.Page =(ApplicationAddress-FLASH_BASE)/FLASH_PAGE_SIZE ;//7;//ApplicationAddress;//0; // 鎿﹂櫎鐨勮捣濮嬮〉鍙?
-    eraseInitStruct.NbPages = 1;// (FLASH_USER_END_ADDR - FLASH_USER_START_ADDR)/FLASH_PAGE_SIZE;; // 鎿﹂櫎鐨勯〉鏁伴噺
+    eraseInitStruct.NbPages = 1;// (FLASH_USER_END_ADDR - FLASH_USER_START_ADDR)/FLASH_PAGE_SIZE;; // 鎿﹂櫎鐨勯��鏁伴噺
 
     uint32_t pageError = 0; // 鐢ㄤ簬淇濆瓨鎿﹂櫎閿欒鐨勫湴鍧?
 
-    // 鎿﹂櫎杩炵画鐨?10涓狥lash椤?
-    HAL_FLASH_Unlock(); // 瑙ｉ攣Flash
+    // 鎿﹂櫎杩炵画鐄1�7?10涓狥lash椄1�7?
+    __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_OPTVERR);//?????
 
-   for(i=eraseInitStruct.Page ;i< 32 ;i++){
-    
+   for(i=eraseInitStruct.Page ;i< 31 ;i++){
+     pageError = 0;
      eraseInitStruct.Page = i;
 
-    if(HAL_FLASHEx_Erase(&eraseInitStruct, &pageError) !=HAL_OK){// 璋冪敤鎿﹂櫎鍑芥暟
+    if(HAL_FLASHEx_Erase(&eraseInitStruct, &pageError) !=HAL_OK){// 璋冪敤鎿﹂櫎鍑芥暄1�7
 
         SerialPutString("write flash is error !!!\r");
 

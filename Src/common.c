@@ -327,10 +327,12 @@ uint32_t FLASH_PagesMask(__IO uint32_t Size)
   if ((size % YMODEM_PAGE_SIZE) != 0)
   {
     pagenumber = (size / YMODEM_PAGE_SIZE) + 1;
+	 packet_length_flag = 1 ;
   }
   else
   {
     pagenumber = size / YMODEM_PAGE_SIZE;
+	packet_length_flag = 0 ;
   }
   return pagenumber;
 
@@ -465,12 +467,12 @@ void Main_Menu(void)
     if (key == 0x31) //0x31 = 0x01
     {
       /* Download user application in the Flash */
-      SerialDownload();
+      SerialDownload(0x01);
     }
     else if (key == 0x32)
     {
       /* Upload user application from the Flash */
-      SerialUpload();
+      SerialUpload(); // SerialDownload(0x02);
     }
     else if (key == 0x33)
     {
